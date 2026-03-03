@@ -1,0 +1,20 @@
+
+### Register User.
+POST http://localhost:8000/api/users/register/
+Content-Type: application/json
+
+{
+  "email": "test1@gmail.com",
+  "username": "test1",
+  "password": "1234"
+}
+
+### GET Tokens
+
+POST http://localhost:8000/api/token/
+Content-Type: application/json
+
+ {
+    "email":"test1@gmail.com",
+    "password":"1234"
+ }

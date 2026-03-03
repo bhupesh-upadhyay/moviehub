@@ -14,3 +14,7 @@ But modern applications use:
     Phone number login
     No username at all
 
+TODO:
+Send welcome email
+Create user profile
+Log activity
