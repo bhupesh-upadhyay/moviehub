@@ -16,10 +16,17 @@ class RegisterSerializer(serializers.ModelSerializer):
     correct: User.objects.create_user(...) -> it does all that & create_user() is defined inside Django’s UserManager.
     
     """
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data["email"],
-            username=validated_data["username"],
-            password=validated_data["password"],
-        )
-        return user
+    # def create(self, validated_data):
+    #     user = User.objects.create_user(
+    #         email=validated_data["email"],
+    #         username=validated_data["username"],
+    #         password=validated_data["password"],
+    #     )
+    #     return user
+    
+
+# Output serializer Format outgoing data (Output)    
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "email", "username"]
