@@ -24,7 +24,9 @@ CLI command can call it
 Celery task can call it
 Future microservice can call it
 """
-from apps.users.models import User
+from apps.users.models import User, UserProfile
+from django.db import transaction
+from django.contrib.auth import get_user_model
 
 class UserService:
 
@@ -32,5 +34,8 @@ class UserService:
     def create_user(validated_data):
         # is because passwords must be hashed, not saved as plain text.
         password = validated_data.pop("password")
-        user = User.objects.create_user(password=password, **validated_data)
+        with transaction.atomic():
+            user = User.objects.create_user(password=password, **validated_data)
+            user.profile = UserProfile.objects.create(user=user)
+            
         return user

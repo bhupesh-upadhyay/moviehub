@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
+
 # Create your models here.
 
 class User(AbstractUser):
@@ -36,3 +38,37 @@ def create(self, validated_data):
 
     return user
 """
+    
+class UserProfile(models.Model):
+    # reverse relation will not be user.profile_set but user.userprofile in onetoone field with related user.profile
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, # better than using hardcoded: User, this is dynamic
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+
+    bio = models.TextField(blank=True)
+
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        blank=True,
+        null=True
+    )
+
+    date_of_birth = models.DateField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} profile"
+    
+    
+    """
+    accounts app → UserProfile
+    billing app → CustomerAccount
+    analytics app → UserMetrics
+    """
