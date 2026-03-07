@@ -24,18 +24,59 @@ CLI command can call it
 Celery task can call it
 Future microservice can call it
 """
-from apps.users.models import User, UserProfile
+from apps.users.models import UserProfile
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.urls import reverse
+from .tokens import email_verification_token
+from django.core.mail import send_mail
+from django.conf import settings
+
+User = get_user_model()
 
 class UserService:
 
     @staticmethod
     def create_user(validated_data):
-        # is because passwords must be hashed, not saved as plain text.
-        password = validated_data.pop("password")
+        """
+        Creates a user and profile inside a transaction
+        and sends an email verification link.
+        """
         with transaction.atomic():
+            # is because passwords must be hashed, not saved as plain text.
+            password = validated_data.pop("password")
             user = User.objects.create_user(password=password, **validated_data)
             user.profile = UserProfile.objects.create(user=user)
+
+        transaction.on_commit(
+            lambda: UserService.send_verification_email(user)
+        )
             
         return user
+    
+    @staticmethod
+    def send_verification_email(user):
+        # generate verification token
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = email_verification_token.make_token(user)
+
+        verification_url = reverse(
+            "verify-email",
+            kwargs={
+                "uid": uid,
+                "token": token
+            }
+        )
+
+        verification_link = f"{settings.DOMAIN}{verification_url}"
+
+        # send email
+        send_mail(
+            subject="Verify your email",
+            message=f"Click the link to verify your email: {verification_link}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False
+        )

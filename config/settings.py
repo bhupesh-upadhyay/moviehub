@@ -128,3 +128,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication'
     ),
 }
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # will not send the real mail only console logs.
+
+DOMAIN = "http://localhost:8000"
+DEFAULT_FROM_EMAIL = "noreply@example.com"
