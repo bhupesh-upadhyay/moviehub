@@ -80,3 +80,10 @@ class UserService:
             recipient_list=[user.email],
             fail_silently=False
         )
+        
+# TODO: AuthService.login_user()
+"""record login history
+update last_login
+check rate limits
+trigger analytics
+lock accounts after failures"""

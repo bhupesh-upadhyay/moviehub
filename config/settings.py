@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -133,3 +134,10 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # will not send
 
 DOMAIN = "http://localhost:8000"
 DEFAULT_FROM_EMAIL = "noreply@example.com"
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1), # Set the desired access token lifetime
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # Set the desired refresh token lifetime
+    # ... other settings
+}

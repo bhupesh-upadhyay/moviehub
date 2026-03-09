@@ -1,14 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import RegisterSerializer, UserSerializer
-from .services import UserService
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+
+from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
+from .services import UserService
 from .tokens import email_verification_token
 from .models import User
-from django.contrib.auth import get_user_model
 
 class RegisterView(APIView):
 
@@ -52,5 +53,21 @@ class VerifyEmailView(APIView):
         return Response(
             {"error": "Invalid or expired token"},
             status=status.HTTP_400_BAD_REQUEST
+        )
+        
+class LoginView(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {                
+                "access":str(refresh.access_token),
+                "refresh":str(refresh),
+                "user":UserSerializer(user).data
+            }
         )
         
