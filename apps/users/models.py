@@ -41,6 +41,7 @@ def create(self, validated_data):
     
 class UserProfile(models.Model):
     # reverse relation will not be user.profile_set but user.userprofile in onetoone field with related user.profile
+    # User.objects.get(profile=2)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, # better than using hardcoded: User, this is dynamic
         on_delete=models.CASCADE,

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, UserProfile
 from django.contrib.auth import authenticate
 
 
@@ -33,7 +33,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "email", "username"]
         
-
 """
 Analogy:
 For login we should NOT use ModelSerializer. Instead use a plain: serializers.Serializer
@@ -43,6 +42,31 @@ Because your User model likely has:email = models.EmailField(unique=True)
 DRF automatically attaches this validator: Ensure email is unique
 But you were trying to log in, not create a user.
 
+
+ModelSerializer
+Use when your serializer is directly tied to a model.
+DRF automatically provide:
+create()
+update()
+model field mapping
+model validators (unique, required, etc.)
+example RegisterSerializer
+UserSerializer
+ProfileSerializer
+
+Serializer
+Use when the serializer represents an operation, not a model.
+example: Login
+Password reset
+Email verification
+Search filters
+OTP verification
+Upload tokens
+These represent actions, not model objects.
+
+"Is this serializer representing a database object?"
+If YES → ModelSerializer
+If NO → Serializer
 """
 
 class LoginSerializer(serializers.Serializer):
@@ -72,3 +96,11 @@ class LoginSerializer(serializers.Serializer):
         
         data['user'] = user
         return data
+
+class UserProfileSerializer(serializers.ModelField):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.email', read_only=True)
+    class Meta:
+        model = UserProfile
+        fields = ['id', 'bio', 'avatar', 'date_of_birth', 'created_at', 'updated_at', 'username', 'email']
+        read_only_fields = ['id', 'created_at', 'updated_at']

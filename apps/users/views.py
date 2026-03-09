@@ -5,11 +5,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 
-from .serializers import RegisterSerializer, UserSerializer, LoginSerializer
+from .serializers import RegisterSerializer, UserSerializer, LoginSerializer, UserProfileSerializer
 from .services import UserService
 from .tokens import email_verification_token
-from .models import User
+from .models import User, UserProfile
 
 class RegisterView(APIView):
 
@@ -71,3 +73,11 @@ class LoginView(APIView):
             }
         )
         
+        
+class ProfileView(RetrieveUpdateAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user.profile
+    
