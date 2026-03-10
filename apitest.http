@@ -4,17 +4,23 @@ POST http://localhost:8000/api/users/register/
 Content-Type: application/json
 
 {
-  "email": "test2@gmail.com",
-  "username": "test2",
+  "email": "test111@gmail.com",
+  "username": "test191",
   "password": "1234"
 }
 
 ### GET Tokens
 
-POST http://localhost:8000/api/token/
+POST http://localhost:8000/api/users/login/
 Content-Type: application/json
 
  {
-    "email":"test1@gmail.com",
+    "email":"test11@gmail.com",
     "password":"1234"
  }
+
+### user profile endpoint
+ 
+GET  http://localhost:8000/api/users/profile/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMDgwMzcyLCJpYXQiOjE3NzMwNzY3NzIsImp0aSI6ImEzZjc2ZDdmMjQyYzRlODI5YWJmYzc5MDAxYTI2YjczIiwidXNlcl9pZCI6IjkifQ.l2ZH4Lj2-zpjlkIW-_WlL4LnBi5CETqMgT9XwMap3go

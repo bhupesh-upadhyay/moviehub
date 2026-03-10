@@ -97,7 +97,7 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-class UserProfileSerializer(serializers.ModelField):
+class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     username = serializers.CharField(source='user.email', read_only=True)
     class Meta:

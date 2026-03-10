@@ -79,5 +79,14 @@ class ProfileView(RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_object(self):
-        return self.request.user.profile
+        """
+        request.user.profile
+        It prevents errors like:
+            UserProfile.DoesNotExist
+        Your API becomes self-healing.
+        Even if data is inconsistent, the endpoint still works.‘
+        """
+        
+        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
+        return profile
     
