@@ -169,3 +169,43 @@ time-limited links
 email flows
 
 safe password handling
+
+
+POST /forgot-password
+↓
+generate reset token
+↓
+send email with reset link
+
+POST /reset-password/<uid>/<token>
+↓
+verify token
+↓
+set new password
+
+
+🧠 Why Stateless Tokens Are Better
+
+When we use Django’s token generator (like PasswordResetTokenGenerator), the system does not store tokens in the database.
+
+Instead the token is generated using:
+
+user_id
+password hash
+timestamp
+secret key
+
+So every time we verify a token, Django recomputes the expected token and compares it.
+
+
+🧠 Why This Is Secure
+
+Because the token depends on the user’s password hash.
+
+If the user resets their password:
+
+password hash changes
+
+Old tokens automatically become invalid.
+
+No manual cleanup required.

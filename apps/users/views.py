@@ -8,8 +8,8 @@ from django.utils.encoding import force_str
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import RegisterSerializer, UserSerializer, LoginSerializer, UserProfileSerializer
-from .services import UserService
+from .serializers import RegisterSerializer, UserSerializer, LoginSerializer, UserProfileSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
+from .services import UserService, AuthService
 from .tokens import email_verification_token
 from .models import User, UserProfile
 
@@ -46,6 +46,8 @@ class VerifyEmailView(APIView):
                     {"message": "Email already verified"},
                     status=status.HTTP_200_OK
                 )
+            # user.is_verified = True
+            # user.is_active = True
             user.save(update_fields=["is_verified", "is_active"])
             
             return Response(
@@ -90,3 +92,39 @@ class ProfileView(RetrieveUpdateAPIView):
         profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
     
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        serialzer = ForgotPasswordSerializer(data=request.data)
+        
+        if not serialzer.is_valid():
+            return Response(serialzer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = serialzer.validated_data['email']
+        AuthService.send_password_reset_email(email)
+        
+        return Response({
+            'message':"If the email exists, a password reset link has been sent."
+        })
+
+class ResetPasswordView(APIView):
+    def post(self, request, uid, token):
+        serializer = ResetPasswordSerializer(data=request.data)
+        # check validation
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            uid = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error':'Invalid valid link'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not email_verification_token.check_token(user, token):
+            Response({'error':'Invalid or Expired token'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        new_passowrd = serializer.validated_data['password']
+        user.set_password(new_passowrd)
+        user.save()
+        
+        return Response({'message':'Password reset successfully'}, status=status.HTTP_400_BAD_REQUEST)
+            

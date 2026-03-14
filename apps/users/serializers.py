@@ -104,3 +104,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ['id', 'bio', 'avatar', 'date_of_birth', 'created_at', 'updated_at', 'username', 'email']
         read_only_fields = ['id', 'created_at', 'updated_at']
+        
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class ResetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, min_length=8)

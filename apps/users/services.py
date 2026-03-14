@@ -53,7 +53,7 @@ class UserService:
         transaction.on_commit(
             lambda: UserService.send_verification_email(user)
         )
-            
+
         return user
     
     @staticmethod
@@ -80,7 +80,23 @@ class UserService:
             recipient_list=[user.email],
             fail_silently=False
         )
+    
+class AuthService:
+    @staticmethod
+    def send_password_reset_email(email):
+        try:
+            user = User.objects.get(email=email)   
+        except User.DoesNotExist:
+            return
         
+        uid = urlsafe_base64_encode(force_bytes(user.pk))    
+        token = email_verification_token.make_token(user)
+        
+        reset_url = reverse('reset-password', kwargs={'uid':uid, 'token':token})
+        reset_link = f"{settings.DOMAIN}{reset_url}"
+        
+        print('Password reset link: ', reset_link)
+
 # TODO: AuthService.login_user()
 """record login history
 update last_login
