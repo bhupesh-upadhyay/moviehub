@@ -129,6 +129,14 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         'rest_framework.authentication.SessionAuthentication'
     ),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "10/min",
+        "anon": "3/min",
+    },
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # will not send the real mail only console logs.
