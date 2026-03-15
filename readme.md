@@ -341,3 +341,40 @@ Django API
    ├── Redis (cache + queue)
    │
    └── Celery Workers (background jobs)
+
+Commands: 
+celery -A config worker -l info # Celery actually creates a pool of worker processes (by default based on CPU cores).
+custom core allocation:
+    celery -A config worker --concurrency=4
+
+Example on a 4-core machine:
+    Celery Worker
+    ├─ Process 1
+    ├─ Process 2
+    ├─ Process 3
+    └─ Process 4
+Each process can execute a task independently.
+
+Suppose 4 tasks arrive:
+    send_email
+    generate_embeddings
+    process_csv
+    rebuild_search_index
+
+With one worker process:
+    Task1 → Task2 → Task3 → Task4
+Everything runs sequentially.
+
+With multiple worker processes:
+    Worker1 → send_email
+    Worker2 → generate_embeddings
+    Worker3 → process_csv
+    Worker4 → rebuild_search_index
+
+Important Insight
+Celery doesn’t rely on async/await.
+Instead it uses:
+    separate processes
+    message queues
+    parallel workers
+

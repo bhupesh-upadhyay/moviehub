@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     "django_extensions",
     "debug_toolbar",
+    "django_celery_results",
     'apps.users',
 ]
 
@@ -152,7 +153,15 @@ SIMPLE_JWT = {
 }
 
 # Celery
-CELERY_BROKER_URL = "redis://localhost:6379/"
+"""
+Redis DB 0 → Task queue (broker)
+Redis DB 1 → Task results (backend)
+"""
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+# Enables extend task result attributes (name, args, kwargs, worker, ertires, queue, delivery_info)
+CELERY_RESULT_EXTENDED = True

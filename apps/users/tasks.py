@@ -14,3 +14,24 @@ def send_welcome_email(email):
     print(f"Sending welcome email to {email}")
     print('end')
     return 'Email sent successfully'
+
+"""
+acks_late=True   → acknowledge after completion
+max_retries=3    → retry if failure occurs
+
+Default Behavior: Queue -> Worker takes task -> ACK immediately -> Worker crashes -> Task lost ❌
+With acks_late=True: Queue -> Worker takes task -> Worker crashes -> Task returned to queue -> Another worker executes
+
+production:
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 5},
+    acks_late=True
+)
+"""
+
+@shared_task(bind=True, acks_late=True, max_retries=3)
+def send_welcome_email(self, email):
+    print(f"Sending email to {email}")
