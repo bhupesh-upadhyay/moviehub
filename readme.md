@@ -209,3 +209,135 @@ password hash changes
 Old tokens automatically become invalid.
 
 No manual cleanup required.
+
+
+
+New workflow using background task
+Client request
+↓
+Create user
+↓
+Queue email task
+↓
+Return response immediately
+↓
+Worker sends email in background
+
+
+Client
+  │
+  ▼
+Django API (handles HTTP)
+  │
+  │ enqueue task
+  ▼
+Redis (message queue) (stores tasks)
+  │
+  ▼
+Celery Worker (executes tasks)
+  │
+  ▼
+Send Email
+
+Importantance of background worker.
+    emails
+    notifications
+    image processing
+    video encoding
+    AI jobs
+    analytics
+    report generation
+
+Important Architecture Concept
+    Your system now has two processes.
+    Web Server
+    Handles API requests.
+        Django
+        Gunicorn
+        Uvicorn
+
+    Worker Server
+    Handles background jobs.
+        Celery worker
+
+Instead of this:
+    register → wait for email → respond
+you get:
+    register → queue email → respond immediately
+
+
+Message Queue (Celery Broker)
+    This is what we discussed earlier.
+    Django pushes task
+    ↓
+    Redis stores task
+    ↓
+    Celery worker processes task
+
+    Example tasks:
+
+    send email
+    generate embeddings
+    process uploaded files
+
+
+
+Use of Redis:
+1. Caching (Most CommoN)
+    User requests movie list
+    ↓
+    Check Redis cache
+    ↓
+    If exists → return instantly
+    If not → query database
+    Example:
+        cache.set("movie_list", data, timeout=300)
+
+2. Message Queue (Celery Broker)
+This is what we discussed earlier.
+    Django pushes task
+    ↓
+    Redis stores task
+    ↓
+    Celery worker processes task
+    Example tasks:
+        send email
+        generate embeddings
+        process uploaded files
+
+3. Rate Limiting / Throttling
+Redis is often used to store counters like:
+    user:123:request_count
+Example:
+    10 requests per minute
+Because Redis operations are extremely fast.
+
+4. Session Storage
+Instead of storing sessions in the database:
+    user session
+    ↓
+    stored in Redis
+
+Benefits:
+    faster login systems
+    better scaling for large apps
+    Django supports this with:
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+5. Real-Time Features
+Redis can also power:
+    live notifications
+    chat systems
+    websocket events
+Especially with Django Channels.
+
+Client
+   │
+   ▼
+Django API
+   │
+   ├── PostgreSQL (database)
+   │
+   ├── Redis (cache + queue)
+   │
+   └── Celery Workers (background jobs)

@@ -103,3 +103,7 @@ update last_login
 check rate limits
 trigger analytics
 lock accounts after failures"""
+
+if __name__ == '__main__':
+    pass
+    # send_welcome_email.delay(user.email)
