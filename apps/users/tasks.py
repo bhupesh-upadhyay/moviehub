@@ -1,5 +1,7 @@
 from celery import shared_task
 from time import sleep
+from .services import UserService, AuthService
+
 
 # TODO:
 """
@@ -35,3 +37,12 @@ production:
 @shared_task(bind=True, acks_late=True, max_retries=3)
 def send_welcome_email(self, email):
     print(f"Sending email to {email}")
+
+
+@shared_task
+def send_verification_email_task(user_id):
+    UserService.send_verification_email(user_id)
+    
+@shared_task
+def send_password_reset_email_task(user_id):
+    AuthService.send_password_reset_email(user_id)
