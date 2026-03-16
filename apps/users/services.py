@@ -44,20 +44,22 @@ class UserService:
         Creates a user and profile inside a transaction
         and sends an email verification link.
         """
+        from .tasks import send_verification_email_task #lazy import: avoids circular import
         with transaction.atomic():
             # is because passwords must be hashed, not saved as plain text.
             password = validated_data.pop("password")
             user = User.objects.create_user(password=password, **validated_data)
-            user.profile = UserProfile.objects.create(user=user)
+            UserProfile.objects.create(user=user)
 
         transaction.on_commit(
-            lambda: UserService.send_verification_email(user)
+            lambda: send_verification_email_task.delay(user.id)
         )
 
         return user
     
     @staticmethod
-    def send_verification_email(user):
+    def send_verification_email(user_id):
+        user = User.objects.get(id=user_id) # should not pass object because celery serializer arguments
         # generate verification token
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = email_verification_token.make_token(user)

@@ -41,8 +41,10 @@ def send_welcome_email(self, email):
 
 @shared_task
 def send_verification_email_task(user_id):
+    sleep(5)
     UserService.send_verification_email(user_id)
     
 @shared_task
 def send_password_reset_email_task(user_id):
+    sleep(8)
     AuthService.send_password_reset_email(user_id)

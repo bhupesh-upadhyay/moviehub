@@ -13,6 +13,7 @@ from .serializers import RegisterSerializer, UserSerializer, LoginSerializer, Us
 from .services import UserService, AuthService
 from .tokens import email_verification_token
 from .models import User, UserProfile
+from .tasks import send_password_reset_email_task
 
 class RegisterView(APIView):
 
@@ -102,7 +103,7 @@ class ForgotPasswordView(APIView):
             return Response(serialzer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         email = serialzer.validated_data['email']
-        AuthService.send_password_reset_email(email)
+        send_password_reset_email_task.delay(email)
         
         return Response({
             'message':"If the email exists, a password reset link has been sent."
