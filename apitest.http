@@ -4,8 +4,8 @@ POST http://localhost:8000/api/users/register/
 Content-Type: application/json
 
 {
-  "email": "test111@gmail.com",
-  "username": "test191",
+  "email": "test11931@gmail.com",
+  "username": "test12091",
   "password": "1234"
 }
 
@@ -30,7 +30,7 @@ POST http://localhost:8000/api/users/forgot-password/
 Content-Type: application/json
 
 {
-  "email":"test11@gmail.com"
+  "email":"test11931@gmail.com"
 }
 
 ### reset password

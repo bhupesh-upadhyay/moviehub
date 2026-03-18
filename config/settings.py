@@ -166,3 +166,9 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 # Enables extend task result attributes (name, args, kwargs, worker, ertires, queue, delivery_info)
 CELERY_RESULT_EXTENDED = True
+
+
+# Media upload field
+import os
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")

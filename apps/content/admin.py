@@ -1,8 +1,14 @@
 from django.contrib import admin
-from .models import Content
+from .models import Movie, Actor, Genre
 
-# Register your models here.
-    
-@admin.register(Content)
-class ContentAdmin(admin.ModelAdmin):
-    list_display = ["title", "content_type", "release_year"]
+@admin.register(Movie)
+class MovieAdmin(admin.ModelAdmin):
+    list_display = ["title", "release_year", "duration"]
+
+@admin.register(Actor)
+class ActorAdmin(admin.ModelAdmin):
+    list_display = ["name", "birth_date"]
+
+@admin.register(Genre)
+class GenreAdmin(admin.ModelAdmin):
+    list_display = ["name"]
