@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django_celery_results",
     'apps.users',
     'apps.content',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -139,6 +140,12 @@ REST_FRAMEWORK = {
         "user": "10/min",
         "anon": "3/min",
     },
+    "DEFAULT_PAGINATION_CLASS":"rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 7,
+    "DEFAULT_FILTER_BACKEND":[
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+    ]
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # will not send the real mail only console logs.
@@ -172,3 +179,4 @@ CELERY_RESULT_EXTENDED = True
 import os
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+

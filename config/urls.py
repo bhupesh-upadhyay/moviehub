@@ -27,6 +27,6 @@ urlpatterns = [
     # path('api/token/', TokenObtainPairView.as_view()), # we replaced it with our custom login endpoint:
     path('api/token/refresh/', TokenRefreshView.as_view()),
     path("api/users/", include("apps.users.urls")),
-    # path("api/content/", include("apps.content.urls")),
+    path("api/", include("apps.content.urls")),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
