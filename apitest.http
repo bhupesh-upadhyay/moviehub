@@ -5,7 +5,7 @@ Content-Type: application/json
 
 {
   "email": "test11931@gmail.com",
-  "username": "test12091",
+  "username": "test11931@gmail.com",
   "password": "1234"
 }
 
@@ -40,3 +40,7 @@ Content-Type: application/json
 {
   "password":"qwer1234"
 }
+
+### movie endpoint
+GET http://localhost:8000/api/movies/?genre=1
+Content-Type: application/json

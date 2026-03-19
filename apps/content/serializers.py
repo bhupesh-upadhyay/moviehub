@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Movie, Genre, Actor
+from .models import Movie, Genre, Actor, Watchlist
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,3 +36,24 @@ class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = "__all__"
+        
+class WatchlistSerializer(serializers.ModelSerializer):
+    movie = MovieSerializer(read_only=True)
+    movie_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Watchlist
+        fields = ["id", "movie", "movie_id", "created_at"]
+        
+    def create(self, validated_data):
+        user = self.context["request"].user
+        movie_id = validated_data["movie_id"]
+
+        movie = Movie.objects.get(id=movie_id)
+
+        watchlist, created = Watchlist.objects.get_or_create(
+            user=user,
+            movie=movie
+        )
+
+        return watchlist
