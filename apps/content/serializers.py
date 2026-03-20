@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Movie, Genre, Actor, Watchlist
+from .models import Movie, Genre, Actor, Watchlist, WatchHistory
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,3 +57,29 @@ class WatchlistSerializer(serializers.ModelSerializer):
         )
 
         return watchlist
+    
+
+class WatchHistorySerializer(serializers.ModelSerializer):
+
+    movie = MovieSerializer(read_only=True)
+    movie_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = WatchHistory
+        fields = ["id", "movie", "movie_id", "progress_seconds", "completed"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        movie_id = validated_data["movie_id"]
+
+        movie = Movie.objects.get(id=movie_id)
+
+        obj, created = WatchHistory.objects.update_or_create(
+            user=user,
+            movie=movie,
+            defaults={
+                "progress_seconds": validated_data["progress_seconds"],
+                "completed": validated_data.get("completed", False),
+            }
+        )
+        return obj
