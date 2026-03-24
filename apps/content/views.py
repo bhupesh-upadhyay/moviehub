@@ -7,6 +7,9 @@ from rest_framework.response import Response
 from django.core.paginator import Paginator
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count
+from django.utils.timezone import now
+from datetime import timedelta
 
 from .serializers import MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory
 from .models import Movie, Watchlist, WatchHistory
@@ -144,5 +147,111 @@ class ContinueWatchingAPIView(APIView):
         ).order_by("-updated_at")
 
         serializer = WatchHistorySerializer(queryset, many=True)
+
+        return Response(serializer.data)
+    
+# GET /api/movies/trending/
+"""
+Get recent activity
+Get total activity
+Compute weighted score
+Sort movies
+Return ranked list
+
+Ranking system
+Aggregation queries
+Time-based analytics
+OTT recommendation logic
+
+permormance:
+    loops through all movies
+TODO:
+    annotations
+    materialized views
+    caching (Redis)
+At scale:
+    Trending is NOT calculated per request
+Instead:
+    Celery job runs every 5 min
+    ↓
+    computes trending
+    ↓
+    stores in Redis
+    ↓
+    API reads from Redis
+"""
+class TrendingMoviesAPIView(APIView):
+
+    def get(self, request):
+
+        recent_threshold = now() - timedelta(days=7)
+
+        # recent views
+        recent_views = WatchHistory.objects.filter(
+            updated_at__gte=recent_threshold
+        ).values("movie").annotate(
+            recent_count=Count("id")
+        )
+
+        # total views
+        total_views = WatchHistory.objects.values("movie").annotate(
+            total_count=Count("id")
+        )
+
+        # dict mapping
+        recent_dict = {
+            item["movie"]: item["recent_count"]
+            for item in recent_views
+        }
+
+        total_dict = {
+            item["movie"]: item["total_count"]
+            for item in total_views
+        }
+
+        # compute scores
+        movie_scores = []
+
+        for movie in Movie.objects.all():
+
+            recent = recent_dict.get(movie.id, 0)
+            total = total_dict.get(movie.id, 0)
+
+            score = (recent * 2) + total
+
+            movie_scores.append((movie, score))
+
+        # sort
+        movie_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # extract movies
+        movies = [item[0] for item in movie_scores]
+
+        # 🔥 LIMIT (top N)
+        limit = request.query_params.get("limit", 10)
+
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 10
+
+        movies = movies[:limit]
+
+        # 🔥 OPTIONAL PAGINATION
+        page = request.query_params.get("page")
+
+        if page:
+            paginator = Paginator(movies, limit)
+            page_obj = paginator.get_page(page)
+
+            serializer = MovieSerializer(page_obj, many=True)
+
+            return Response({
+                "count": paginator.count,
+                "num_pages": paginator.num_pages,
+                "results": serializer.data
+            })
+
+        serializer = MovieSerializer(movies, many=True)
 
         return Response(serializer.data)
