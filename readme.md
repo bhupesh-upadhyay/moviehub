@@ -378,3 +378,47 @@ Instead it uses:
     message queues
     parallel workers
 
+
+
+# Semantic search Implementation..
+
+Phase1 Now: Store embeddings in PostgreSQL
+Phase2 Later: Move to vector DB (FAISS / Pinecone)
+
+Architecture:
+    Movie
+    ├ title
+    ├ description
+    └ embedding (vector)
+
+Flow
+    Movie created
+    ↓
+    Celery task generates embedding
+    ↓
+    Embedding stored in DB
+
+Search:
+    User query
+    ↓
+    Convert to embedding
+    ↓
+    Compare with movie embeddings
+    ↓
+    Return most similar movies
+
+
+What Actually Happens at 1M Movies
+    Load 1,000,000 rows from DB
+    ↓
+    Loop in Python
+    ↓
+    Compute cosine similarity 1,000,000 times
+    (O(N) → linear scan. Brute-force vector search)
+
+solutions:
+Approximate Nearest Neighbor (ANN)
+    FAISS
+    Pinecone
+    Weaviate
+

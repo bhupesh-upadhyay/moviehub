@@ -13,6 +13,8 @@ from datetime import timedelta
 
 from .serializers import MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory
 from .models import Movie, Watchlist, WatchHistory
+from .services import EmbeddingService
+from .utils import cosine_similarity
 # Create your views here.
 
 class MovieListAPIView(APIView):
@@ -255,3 +257,70 @@ class TrendingMoviesAPIView(APIView):
         serializer = MovieSerializer(movies, many=True)
 
         return Response(serializer.data)
+
+class SemanticSearchAPIView(APIView):
+
+    def get(self, request):
+
+        query = request.query_params.get("q")
+
+        if not query:
+            return Response({"error": "Query required"}, status=400)
+
+        query_embedding = EmbeddingService.generate_embedding(query)
+
+        results = []
+
+        for movie in Movie.objects.exclude(embedding=None):
+
+            score = cosine_similarity(query_embedding, movie.embedding)
+
+            results.append((movie, score))
+
+        results.sort(key=lambda x: x[1], reverse=True)
+
+        top_movies = [item[0] for item in results[:10]]
+
+        serializer = MovieSerializer(top_movies, many=True)
+
+        return Response(serializer.data)
+    
+    
+# TODO: alter the api for million records
+"""
+class SemanticSearchAPIView(APIView):
+
+    def get(self, request):
+
+        query = request.query_params.get("q")
+
+        if not query:
+            return Response({"error": "Query required"}, status=400)
+
+        # 🔍 Step 1: Reduce dataset
+        queryset = Movie.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        )[:100]
+
+        query_embedding = EmbeddingService.generate_embedding(query)
+
+        results = []
+
+        for movie in queryset:
+
+            if not movie.embedding:
+                continue
+
+            score = cosine_similarity(query_embedding, movie.embedding)
+
+            results.append((movie, score))
+
+        results.sort(key=lambda x: x[1], reverse=True)
+
+        movies = [item[0] for item in results[:10]]
+
+        serializer = MovieSerializer(movies, many=True)
+
+        return Response(serializer.data)
+"""
