@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   redis:
@@ -7,3 +6,19 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    container_name: moviehub-postgres
+    environment:
+      POSTGRES_DB: moviehub
+      POSTGRES_USER: moviehub_user
+      POSTGRES_PASSWORD: moviehub_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
