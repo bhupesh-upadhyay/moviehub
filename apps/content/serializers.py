@@ -28,14 +28,25 @@ class MovieSerializer(serializers.ModelSerializer):
             return string
             str(Genre(name="Sci-Fi")) → "Sci-Fi"
     """
-    # genres = serializers.StringRelatedField(many=True)
-    # actors = serializers.StringRelatedField(many=True)
-    genres = GenreSerializer(many=True)
-    actors = ActorSerializer(many=True)
+    genres = serializers.StringRelatedField(many=True)
+    actors = serializers.StringRelatedField(many=True)
+    # genres = GenreSerializer(many=True)
+    # actors = ActorSerializer(many=True)
     
     class Meta:
         model = Movie
-        fields = "__all__"
+        fields = [
+            "id",
+            "title",
+            "description",
+            "release_year",
+            "duration",
+            "genres",
+            "actors",
+            "thumbnail",
+            "video_url",
+            "created_at",
+        ]
         
 class WatchlistSerializer(serializers.ModelSerializer):
     movie = MovieSerializer(read_only=True)

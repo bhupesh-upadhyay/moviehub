@@ -34,6 +34,7 @@ class Movie(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+    embedding = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
