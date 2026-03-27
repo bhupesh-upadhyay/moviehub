@@ -94,3 +94,11 @@ class WatchHistorySerializer(serializers.ModelSerializer):
             }
         )
         return obj
+    
+  
+# Light weight Movie search only    
+class MovieListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Movie
+        fields = ["id", "title", "thumbnail"]
