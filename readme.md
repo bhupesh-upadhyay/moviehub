@@ -422,3 +422,39 @@ Approximate Nearest Neighbor (ANN)
     Pinecone
     Weaviate
 
+
+
+# minIO considering
+MinIO is a high-performance, open-source object storage system designed for cloud-native applications. Think of it as a lightweight alternative to services like Amazon S3—but you can run it on your own infrastructure.
+☁️ S3-compatible API
+It fully supports the Amazon S3 API, which means tools built for S3 usually work with MinIO without changes.
+minIO vs AWS s3
+| Feature          | MinIO              | Amazon S3       |
+| ---------------- | ------------------ | --------------- |
+| Deployment       | Self-hosted        | Managed cloud   |
+| Cost             | Free (open source) | Pay-as-you-go   |
+| Control          | Full control       | Limited         |
+| Setup complexity | Requires setup     | No setup needed |
+
+Why MinIO works here
+S3-compatible: Django has packages like django-storages that support S3. MinIO implements the same API, so you just point django-storages to your local MinIO server.
+Local dev friendly: You can run MinIO on your machine via Docker, store videos locally inside MinIO, and test uploading/serving.
+Easy switch to production: When ready, you can switch your storage backend to AWS S3 or another cloud provider with minimal code changes.
+
+* current flow
+    Frontend → Django → MinIO
+    problem:
+        Video goes through Django server
+        → heavy load
+        → slow uploads
+        → server bottleneck ❌
+* better
+    Client → S3 directly (pre-signed URL)
+    Frontend → MinIO (direct upload)
+    Django → only generates signed URL
+    solution:
+        Why This Is Better
+            Faster uploads
+            Less backend load
+            Scales easily
+            Used by Netflix / AWS systems

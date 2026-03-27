@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     "django_celery_results",
     'apps.users',
     'apps.content',
-    'django_filters'
+    'django_filters',
+    'storages'
 ]
 
 MIDDLEWARE = [
@@ -191,3 +192,22 @@ import os
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+
+# Use S3 backend (MinIO compatible)
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+AWS_ACCESS_KEY_ID = 'admin'  # MinIO root user
+AWS_SECRET_ACCESS_KEY = 'password123'
+AWS_STORAGE_BUCKET_NAME = 'mybucket'  # create this bucket in MinIO web console
+AWS_S3_ENDPOINT_URL = 'http://localhost:9000'  # MinIO API endpoint
+AWS_S3_REGION_NAME = 'us-east-1'  # any value, MinIO ignores it
+AWS_QUERYSTRING_AUTH = False  # optional, for public access without signed URLs
+AWS_S3_USE_SSL = False
+AWS_S3_ADDRESSING_STYLE = "path"
