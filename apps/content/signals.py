@@ -28,6 +28,8 @@ def generate_embedding(sender, instance, created, **kwargs):
         )
 
     if trigger:
+        # if getattr(instance, "_skip_signal", False):
+        #     return  # 🚫 skip during bulk import
         print('Triggred postsave adding movie to the queue.')
         transaction.on_commit(
             lambda: generate_movie_embedding.delay(instance.id)

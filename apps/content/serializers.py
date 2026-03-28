@@ -44,7 +44,7 @@ class MovieSerializer(serializers.ModelSerializer):
             "genres",
             "actors",
             "thumbnail",
-            "video_url",
+            "video",
             "created_at",
         ]
         
