@@ -11,7 +11,7 @@ from django.db.models import Count
 from django.utils.timezone import now
 from datetime import timedelta
 
-from .serializers import MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory
+from .serializers import MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory, MovieListSerializer
 from .models import Movie, Watchlist, WatchHistory
 from .services import EmbeddingService
 from .utils import cosine_similarity
@@ -281,7 +281,7 @@ class SemanticSearchAPIView(APIView):
 
         top_movies = [item[0] for item in results[:10]]
 
-        serializer = MovieSerializer(top_movies, many=True)
+        serializer = MovieListSerializer(top_movies, many=True)
 
         return Response(serializer.data)
     

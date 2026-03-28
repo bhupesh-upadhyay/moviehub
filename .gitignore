@@ -16,6 +16,7 @@ __pycache__/
 #local database
 db.sqlite3
 postgres_data/
+minio_data/
 
 # Media
 media/

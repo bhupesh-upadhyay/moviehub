@@ -1,5 +1,6 @@
 from django.db import models
 from apps.users.models import User
+from .validators import validate_video_file
 
 class Genre(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -30,7 +31,14 @@ class Movie(models.Model):
         related_name="movies"
     )
     thumbnail = models.ImageField(upload_to="thumbnails/")
-    video_url = models.URLField()
+    video = models.FileField(
+        upload_to="videos/",
+        validators=[validate_video_file],
+        null=True,
+        blank=True,
+        help_text="Upload trailer (MP4, MKV only, max 50MB)"
+    )
+    # video_url = models.URLField()
     created_at = models.DateTimeField(
         auto_now_add=True
     )
