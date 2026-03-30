@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count
 from django.utils.timezone import now
 from datetime import timedelta
-
+from rest_framework import status
 from .serializers import MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory, MovieListSerializer
 from .models import Movie, Watchlist, WatchHistory
 from .services import EmbeddingService
@@ -277,7 +277,6 @@ class SemanticSearchAPIView(APIView):
             score = cosine_similarity(query_embedding, movie.embedding)
 
             results.append((movie, score))
-
         results.sort(key=lambda x: x[1], reverse=True)
 
         top_movies = [item[0] for item in results[:10]]
@@ -325,3 +324,38 @@ class SemanticSearchAPIView(APIView):
 
         return Response(serializer.data)
 """
+
+class SimilarViewsAPIView(APIView):
+    def get(self, request, movie_id):
+        try:
+            movie = Movie.objects.get(id=movie_id)
+        except Movie.DoesNotExist:
+            return Response({'error':'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if not movie.embedding:
+            return Response({'error':'No embeddings available'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        movie_genres = set(movie.genres.values_list("id", flat=True))
+        result = []
+        
+        for m in Movie.objects.exclude(id=movie.id).exclude(embedding__isnull=True):
+            # Embedding similarity
+            sim_score = cosine_similarity(movie.embedding, m.embedding)
+            
+            # Genre boost
+            m_genres = set(m.genres.values_list("id", flat=True))
+            common_genres = movie_genres.intersection(m_genres)
+            
+            genre_score = len(common_genres) * 0.1  # weight
+            
+            # 3. Final score
+            final_score = sim_score + genre_score
+            
+            result.append((m, final_score))
+        
+        result.sort(key=lambda x: x[1], reverse=True)
+        top_movies = [item[0] for item in result[:10]]
+        serializers = MovieListSerializer(top_movies, many=True)
+        return Response(serializers.data)
+        
+        

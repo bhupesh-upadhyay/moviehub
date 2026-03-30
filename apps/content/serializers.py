@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Movie, Genre, Actor, Watchlist, WatchHistory
+from rest_framework.exceptions import ValidationError
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,8 +60,10 @@ class WatchlistSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context["request"].user
         movie_id = validated_data["movie_id"]
-
-        movie = Movie.objects.get(id=movie_id)
+        try:
+            movie = Movie.objects.get(id=movie_id)
+        except Movie.DoesNotExist:
+            raise ValidationError({"error":"Movie does not exist"})
 
         watchlist, created = Watchlist.objects.get_or_create(
             user=user,

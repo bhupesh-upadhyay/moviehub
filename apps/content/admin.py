@@ -15,12 +15,17 @@ class GenreAdmin(admin.ModelAdmin):
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
-    list_display = ["title", "release_year"]
+    list_display = ["title_with_id", "release_year", "tmdb_id"]
     search_fields = ["title", 'genres__name']
     list_filter = ['genres__name']
     list_per_page = 25
     actions = ["export_as_csv"]  # ✅ add this
     change_list_template = "admin/movie_changelist.html"
+    
+    def title_with_id(self, obj):
+        return f"{obj.title}-({obj.id})"
+
+    title_with_id.short_description = "Title"
 
     def export_as_csv(self, request, queryset):
         response = HttpResponse(content_type="text/csv")
