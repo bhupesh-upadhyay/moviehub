@@ -69,7 +69,6 @@ class WatchlistSerializer(serializers.ModelSerializer):
 
         return watchlist
     
-
 class WatchHistorySerializer(serializers.ModelSerializer):
 
     movie = MovieSerializer(read_only=True)
@@ -94,11 +93,9 @@ class WatchHistorySerializer(serializers.ModelSerializer):
             }
         )
         return obj
-    
-  
+ 
 # Light weight Movie search only    
 class MovieListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Movie
-        fields = ["id", "title", "thumbnail"]
+        fields = ["id", "title", "thumbnail", "description"]

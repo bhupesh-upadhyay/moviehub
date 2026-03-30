@@ -19,5 +19,5 @@ urlpatterns = [
     path("watchlist/<int:pk>/", WatchlistDeleteView.as_view()),
     path("progress/", WatchProgressAPIView.as_view()),
     path("continue/", ContinueWatchingAPIView.as_view()),
-    path("movies/search/", SemanticSearchAPIView.as_view()),
+    path("movies/semantic-search/", SemanticSearchAPIView.as_view()),
 ]

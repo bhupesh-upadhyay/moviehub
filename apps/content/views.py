@@ -271,7 +271,8 @@ class SemanticSearchAPIView(APIView):
 
         results = []
 
-        for movie in Movie.objects.exclude(embedding=None):
+        # for movie in Movie.objects.exclude(embedding=None):
+        for movie in Movie.objects.filter(embedding__isnull=False):
 
             score = cosine_similarity(query_embedding, movie.embedding)
 
