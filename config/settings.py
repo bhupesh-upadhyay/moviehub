@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.content',
     'django_filters',
-    'storages'
+    'storages',
+    'import_export',
 ]
 
 MIDDLEWARE = [

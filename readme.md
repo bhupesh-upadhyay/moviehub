@@ -458,3 +458,29 @@ Easy switch to production: When ready, you can switch your storage backend to AW
             Less backend load
             Scales easily
             Used by Netflix / AWS systems
+
+
+Recommendation Types (We’ll Build Step-by-Step)
+GET /api/movies/recommend/?movie_id=1
+Recommendations should be based on:
+
+A: Similar movies (embedding)
+B: User watch history
+C: Combination
+
+1. Content-Based
+    Use embeddings
+    Find similar movies
+    embeddings ✅
+    cosine similarity ✅
+
+2. Personalized Recommendations
+    Based on:
+    - watch history
+    - genres
+    - behavior
+
+3. Trending / Popular
+Most watched movies
+
+GET /api/movies/1/similar/
