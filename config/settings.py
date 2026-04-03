@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'django_filters',
     'storages',
     'import_export',
+    "frontend.home",
+    "frontend.search",
+    "frontend.accounts",
 ]
 
 MIDDLEWARE = [
@@ -65,7 +68,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
