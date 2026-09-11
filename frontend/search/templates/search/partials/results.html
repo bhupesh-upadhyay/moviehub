@@ -1,0 +1,10 @@
+<!-- search/templates/search/partials/results.html -->
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+    {% for movie in movies %}
+        <div class="bg-gray-800 p-3 rounded">
+            <img src="{{ movie.thumbnail }}" class="w-full h-60 object-cover"/>
+            <p>{{ movie.title }}</p>
+        </div>
+    {% endfor %}
+</div>

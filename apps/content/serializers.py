@@ -99,6 +99,7 @@ class WatchHistorySerializer(serializers.ModelSerializer):
  
 # Light weight Movie search only    
 class MovieListSerializer(serializers.ModelSerializer):
+    genres = serializers.StringRelatedField(many=True)
     class Meta:
         model = Movie
-        fields = ["id", "title", "thumbnail", "description"]
+        fields = ["id", "title", "thumbnail", "description", "genres"]

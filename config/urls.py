@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("frontend.home.urls")),
     path("auth/", include("frontend.accounts.urls")),
+    path("search/", include("frontend.search.urls")),
     # path('api/token/', TokenObtainPairView.as_view()), # we replaced it with our custom login endpoint:
     path('api/token/refresh/', TokenRefreshView.as_view()),
     path("api/users/", include("apps.users.urls")),
