@@ -48,8 +48,8 @@ class VerifyEmailView(APIView):
                     {"message": "Email already verified"},
                     status=status.HTTP_200_OK
                 )
-            # user.is_verified = True
-            # user.is_active = True
+            user.is_verified = True
+            user.is_active = True
             user.save(update_fields=["is_verified", "is_active"])
             
             return Response(

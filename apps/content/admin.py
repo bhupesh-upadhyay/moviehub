@@ -1,7 +1,7 @@
 import csv
 from django.contrib import admin, messages
 from django.shortcuts import render, redirect
-from .models import Movie, Actor, Genre
+from .models import Movie, Actor, Genre, Watchlist
 from django.http import HttpResponse
 from django.urls import path
 
@@ -117,4 +117,7 @@ class MovieAdmin(admin.ModelAdmin):
         return custom_urls + urls
     
     export_as_csv.short_description = "Export selected movies as CSV"
-    
+
+@admin.register(Watchlist)
+class Watchlist(admin.ModelAdmin):
+    list_display = ["user", "movie"]

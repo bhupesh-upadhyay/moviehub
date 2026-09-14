@@ -10,23 +10,39 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 from datetime import timedelta
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return val.lower() in ("1", "true", "yes", "on")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8yss5j_waxde@qwvvrj3w&b!umn-k+22bdvvgis9f+wj%)3k@p'
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-8yss5j_waxde@qwvvrj3w&b!umn-k+22bdvvgis9f+wj%)3k@p",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = []
+_allowed = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = [h.strip() for h in _allowed.split(",") if h.strip()]
 
 
 # Application definition
@@ -96,11 +112,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "moviehub",
-        "USER": "moviehub_user",
-        "PASSWORD": "moviehub_pass",
-        "HOST": "localhost",  # because Django runs locally
-        "PORT": "5432",
+        "NAME": os.environ.get("DB_NAME", "moviehub"),
+        "USER": os.environ.get("DB_USER", "moviehub_user"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "moviehub_pass"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
 
@@ -166,8 +182,8 @@ REST_FRAMEWORK = {
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # will not send the real mail only console logs.
 
-DOMAIN = "http://localhost:8000"
-DEFAULT_FROM_EMAIL = "noreply@example.com"
+DOMAIN = os.environ.get("DOMAIN", "http://localhost:8000")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@example.com")
 
 
 SIMPLE_JWT = {
@@ -182,8 +198,8 @@ Redis DB 0 → Task queue (broker)
 Redis DB 1 → Task results (backend)
 """
 
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -192,7 +208,6 @@ CELERY_RESULT_EXTENDED = True
 
 
 # Media upload field
-import os
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -207,15 +222,14 @@ STORAGES = {
     },
 }
 
-AWS_ACCESS_KEY_ID = 'admin'  # MinIO root user
-AWS_SECRET_ACCESS_KEY = 'password123'
-AWS_STORAGE_BUCKET_NAME = 'mybucket'  # create this bucket in MinIO web console
-AWS_S3_ENDPOINT_URL = 'http://localhost:9000'  # MinIO API endpoint
-AWS_S3_REGION_NAME = 'us-east-1'  # any value, MinIO ignores it
-AWS_QUERYSTRING_AUTH = False  # optional, for public access without signed URLs
-AWS_S3_USE_SSL = False
-AWS_S3_ADDRESSING_STYLE = "path"
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "admin")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "password123")
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "mybucket")
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", "http://localhost:9000")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-1")
+AWS_QUERYSTRING_AUTH = env_bool("AWS_QUERYSTRING_AUTH", False)
+AWS_S3_USE_SSL = env_bool("AWS_S3_USE_SSL", False)
+AWS_S3_ADDRESSING_STYLE = os.environ.get("AWS_S3_ADDRESSING_STYLE", "path")
 
-# Tmdb keys
-TMDB_ACCESS_TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzNTU0MDAxNDM0MTNlMjU2MmNlMGQ4NDQxMWNjY2M3MSIsIm5iZiI6MTc3MTUxMDY5MC4yMzMsInN1YiI6IjY5OTcxYmEyZDlkMzhkMThkY2M4NTU0YiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ._rgqV1tSvdYsckJ_nu4p2jCZz9GBzIM1SY3OXKbp5oc'
-TMDB_API_KEY ='355400143413e2562ce0d84411cccc71'
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
+TMDB_ACCESS_TOKEN = os.environ.get("TMDB_ACCESS_TOKEN", "")

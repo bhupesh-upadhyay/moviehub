@@ -3,6 +3,7 @@ venv/
 .env/
 .env
 .env.*
+!.env.example
 
 # IDE / Editor
 .vscode/
@@ -22,3 +23,6 @@ pgadmin_data/
 
 # Media
 media/
+
+#hugging face
+huggingface_cache/
