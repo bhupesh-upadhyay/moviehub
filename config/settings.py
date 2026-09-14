@@ -21,6 +21,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
+# FastEmbed / Hugging Face downloads (project root, not system /tmp or ~/.cache)
+FASTEMBED_CACHE_DIR = Path(
+    os.environ.get("FASTEMBED_CACHE_DIR", str(BASE_DIR / "huggingface_cache"))
+)
+FASTEMBED_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+# Single cache root for FastEmbed and huggingface_hub (avoid split hub/ + cache_dir races)
+os.environ.setdefault("HF_HOME", str(FASTEMBED_CACHE_DIR))
+os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(FASTEMBED_CACHE_DIR))
+# Safer downloads when many Celery workers start at once (avoids partial xet blobs)
+os.environ.setdefault("HF_HUB_ENABLE_HF_TRANSFER", "0")
+
 
 def env_bool(name: str, default: bool = False) -> bool:
     val = os.environ.get(name)
@@ -63,9 +74,6 @@ INSTALLED_APPS = [
     'django_filters',
     'storages',
     'import_export',
-    "frontend.home",
-    "frontend.search",
-    "frontend.accounts",
 ]
 
 MIDDLEWARE = [
