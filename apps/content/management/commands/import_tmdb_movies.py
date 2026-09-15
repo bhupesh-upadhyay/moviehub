@@ -5,6 +5,8 @@ import time
 from apps.content.tasks import generate_movie_embedding
 
 # python manage.py import_tmdb_movies --pages=5
+add_genre = True
+add_actor = False
 class Command(BaseCommand):
     help = "Import movies from TMDB"
 
@@ -16,12 +18,13 @@ class Command(BaseCommand):
         pages = kwargs["pages"]
 
         # Load genres
-        genres_data = fetch_genres()
-        genre_map = {}
+        if add_genre:
+            genres_data = fetch_genres()
+            genre_map = {}
 
-        for g in genres_data["genres"]:
-            genre_obj, _ = Genre.objects.get_or_create(name=g["name"])
-            genre_map[g["id"]] = genre_obj
+            for g in genres_data["genres"]:
+                genre_obj, _ = Genre.objects.get_or_create(name=g["name"])
+                genre_map[g["id"]] = genre_obj
 
         for page in range(1, pages + 1):
 
@@ -40,23 +43,25 @@ class Command(BaseCommand):
                 )
 
                 # Genres
-                genre_ids = item.get("genre_ids", [])
-                movie.genres.set([
-                    genre_map[gid] for gid in genre_ids if gid in genre_map
-                ])
+                if add_genre:
+                    genre_ids = item.get("genre_ids", [])
+                    movie.genres.set([
+                        genre_map[gid] for gid in genre_ids if gid in genre_map
+                    ])
 
                 # Actors
-                credits = TMDBService.fetch_movie_credits(item["id"])
-                if not credits:
-                    continue
-                actors = credits.get("cast", [])[:5]
+                if add_actor:
+                    credits = TMDBService.fetch_movie_credits(item["id"])
+                    if not credits:
+                        continue
+                    actors = credits.get("cast", [])[:5]
 
-                actor_objs = []
-                for actor in actors:
-                    actor_obj, _ = Actor.objects.get_or_create(name=actor["name"])
-                    actor_objs.append(actor_obj)
+                    actor_objs = []
+                    for actor in actors:
+                        actor_obj, _ = Actor.objects.get_or_create(name=actor["name"])
+                        actor_objs.append(actor_obj)
 
-                movie.actors.set(actor_objs)
+                    movie.actors.set(actor_objs)
                 # 🔥 prevent rate limit
                 time.sleep(0.5)
 

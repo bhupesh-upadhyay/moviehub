@@ -48,3 +48,5 @@ TRUNCATE TABLE content_movie_genre, content_movie_actors, content_actor, content
 \cancel
 Ctrl + C
 
+Replaced PyTorch-based embeddings with FastEmbed/ONNX, trimmed requirements.txt, fixed Celery/cache for the ONNX model, then uninstalled orphaned GPU/ML wheels (nvidia-*, torch, triton, scipy/sklearn, …) from the existing venv — same embedding behavior for search, much smaller Python environment.
+

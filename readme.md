@@ -1,486 +1,319 @@
+# MovieHub
+
+MovieHub is a Django REST API backend for a streaming-style catalog: user accounts with JWT auth, movies and metadata, watchlists and progress, semantic search via embeddings, and background jobs for email and ML workloads.
+
+Formatting in this file follows [GitHub basic writing and formatting syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+
+---
+
+## Table of contents
+
+- [Features](#features)
+- [Backend architecture](#backend-architecture)
+- [Data stores](#data-stores)
+- [Project layout](#project-layout)
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [Running the stack](#running-the-stack)
+- [Environment variables](#environment-variables)
+- [API overview](#api-overview)
+- [Useful commands](#useful-commands)
+- [Further notes](#further-notes)
+
+---
+
+## Features
+
+- **Users** — Registration, email verification, JWT login, profile, password reset
+- **Content** — Movies, genres, actors, watchlist, watch history / continue watching
+- **Search & recommendations** — Semantic search and similar movies (embeddings in PostgreSQL)
+- **Async work** — Celery workers for emails, embedding generation, and similar tasks
+- **Media** — S3-compatible storage (MinIO locally; AWS S3 in production with the same settings)
+
+---
+
+## Backend architecture
+
+The API is a classic **Django + DRF** web process. Long-running or slow work is **queued to Celery**; durable data lives in **PostgreSQL**; **Redis** carries Celery messages; **MinIO** holds uploaded media.
+
+```mermaid
+flowchart LR
+  subgraph clients [Clients]
+    FE[Web / mobile app]
+  end
+
+  subgraph web [Web tier]
+    DJ[Django + Gunicorn / runserver]
+    DRF[Django REST Framework]
+    DJ --> DRF
+  end
+
+  subgraph data [Data & messaging]
+    PG[(PostgreSQL)]
+    R[(Redis)]
+    S3[(MinIO / S3)]
+  end
+
+  subgraph workers [Workers]
+    CW[Celery worker]
+  end
+
+  FE -->|HTTPS JSON| DRF
+  DRF --> PG
+  DRF --> S3
+  DRF -->|enqueue tasks| R
+  R --> CW
+  CW --> PG
+  CW --> S3
+```
+
+| Layer | Responsibility |
+| --- | --- |
+| **HTTP (Django / DRF)** | Routing, auth (Simple JWT), validation, serializers, throttling |
+| **Service layer** | `apps.users.services`, `apps.content.services` — business logic and transactions |
+| **Signals & tasks** | Post-save hooks; Celery tasks in `apps.users.tasks`, `apps.content.tasks` |
+| **Integrations** | TMDB import (`import_tmdb_movies`), FastEmbed for vectors, `django-storages` + boto3 for objects |
+
+**Authentication flow (summary):** clients send `Authorization: Bearer <access_token>`; DRF’s `JWTAuthentication` validates the token, loads the user from PostgreSQL, and sets `request.user`.
+
+---
+
+## Data stores
+
+MovieHub does **not** use a single database. Each store has a specific role:
+
+| Store | Engine / image | Used for | Config / notes |
+| --- | --- | --- | --- |
+| **PostgreSQL** | `postgres:15` (`moviehub-postgres`) | Primary **relational** database | `DATABASES` in `config/settings.py` — users, profiles, movies, genres, actors, M2M tables, watchlist, watch history, **`django_celery_results` task results** |
+| **Redis** | `redis:7` (`moviehub-redis`) | **Celery broker** (task queue) | `CELERY_BROKER_URL` — default logical DB `0` (`redis://host:port/0`) |
+| **MinIO** | `minio/minio` | **Object storage** (S3 API) | Videos and file uploads via `django-storages`; bucket name `AWS_STORAGE_BUCKET_NAME` |
+| **Local disk** | Project directories | Dev-only / cache | `media/` (when not using S3), `huggingface_cache/` for embedding model files (`FASTEMBED_CACHE_DIR`) |
+
+### PostgreSQL (application schema)
+
+| Area | Apps / models | Examples |
+| --- | --- | --- |
+| Identity | `apps.users` | Custom `User`, `UserProfile` |
+| Catalog | `apps.content` | `Movie`, `Genre`, `Actor` |
+| Engagement | `apps.content` | `Watchlist`, `WatchHistory` |
+| Search (phase 1) | `Movie.embedding` | JSON array of floats (cosine similarity in app code) |
+| Celery | `django_celery_results` | Stored task outcomes when `CELERY_RESULT_BACKEND=django-db` |
+
+SQLite appears only as a **commented** alternative in `config/settings.py`; the running project expects PostgreSQL.
+
+### Redis
+
+- **Today:** Celery message broker only (`CELERY_BROKER_URL`).
+- **Planned / documented patterns:** response caching, rate-limit counters, session cache, trending snapshots — see comments in `apps/content/views.py` and [Further notes](#further-notes).
+
+> **Port alignment:** Docker maps Redis to a **host** port (see `REDIS_PORT` in `.env`). `CELERY_BROKER_URL` must use that same host port (for example `redis://localhost:6333/0` if `REDIS_PORT=6333`).
+
+### MinIO (S3-compatible)
+
+- **Endpoint:** `AWS_S3_ENDPOINT_URL` (default `http://localhost:9000`)
+- **Console:** `MINIO_CONSOLE_PORT` (default `9001`) — create the bucket named in `AWS_STORAGE_BUCKET_NAME` before uploading videos
+- **Production:** point the same variables at AWS S3 (or another S3-compatible provider)
+
+### Embeddings & scale (roadmap)
+
+| Phase | Storage | Search |
+| --- | --- | --- |
+| **Current** | PostgreSQL `Movie.embedding` (JSONField) | Linear scan + cosine similarity in Python |
+| **Later** | Dedicated vector index (e.g. FAISS, Pinecone, Weaviate) | Approximate nearest neighbor (ANN) at large catalog size |
+
+---
+
+## Project layout
+
+```text
 moviehub/
-│
-├── config/
+├── config/              # Django settings, URLs, Celery app
 ├── apps/
-│   └── users/
+│   ├── users/           # Auth, profile, email flows
+│   └── content/         # Movies, watchlist, search, TMDB import
+├── templates/
+├── docker-compose.yml   # PostgreSQL, Redis, MinIO
+├── requirements.txt
 ├── manage.py
+└── .env.example         # Copy to .env and adjust
+```
 
+---
 
-user model:
-The default Django user uses:
-USERNAME_FIELD = "username"
-But modern applications use:
-    Email-based login
-    Phone number login
-    No username at all
+## Prerequisites
 
-TODO:
-Send welcome email
-Create user profile
-Log activity
+- **Python** 3.12 (see `.python-version`)
+- **Docker** and **Docker Compose** (for PostgreSQL, Redis, MinIO)
+- **Git**
 
-user verification link.
-    User registers
-    ↓
-    UserService.create_user()
-    ↓
-    Signal triggers
-    ↓
-    Generate verification token
-    ↓
-    Send verification email
-    ↓
-    User clicks link
-    ↓
-    VerifyEmailView
-    ↓
-    user.is_verified = True
+Optional:
 
+- [TMDB](https://www.themoviedb.org/settings/api) API key / access token for `import_tmdb_movies`
+- `psql` client (see `commands.md` for PostgreSQL cheatsheet)
 
-GET /verify-email/<uid>/<token>/
+---
 
-decode uid
-↓
-get user
-↓
-validate token
-↓
-verify account
+## Setup
 
+### 1. Clone and enter the repo
 
-simple jwt life cycle:
+```bash
+git clone <your-repo-url> moviehub
+cd moviehub
+```
 
-Step-by-Step: How request.user Is Determined
-1️⃣ Client Sends Request
+### 2. Python virtual environment
 
-Example request:
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-GET /api/profile
-Authorization: Bearer <access_token>
-2️⃣ DRF Authentication Middleware Runs
+### 3. Environment file
 
-Because in settings.py you configured:
+```bash
+cp .env.example .env
+```
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
-}
+Edit `.env`:
 
-DRF will use Simple JWT.
+- Set **`DJANGO_SECRET_KEY`** for anything beyond local dev.
+- Match **`DB_PORT`**, **`REDIS_PORT`**, and **`CELERY_BROKER_URL`** to the ports Docker publishes on your machine.
+- Add **`TMDB_ACCESS_TOKEN`** / **`TMDB_API_KEY`** only if you import from TMDB.
+- Never commit real secrets; keep them in `.env` only.
 
-3️⃣ DRF Extracts the Token
+### 4. Start infrastructure
 
-From this header:
+```bash
+docker compose up -d
+```
 
-Authorization: Bearer <token>
+This starts:
 
-It extracts:
+| Service | Container | Default host ports (override via `.env`) |
+| --- | --- | --- |
+| PostgreSQL | `moviehub-postgres` | `DB_PORT` → 5432 |
+| Redis | `moviehub-redis` | `REDIS_PORT` → 6379 |
+| MinIO | `moviehub-minio` | API `9000`, console `9001` |
 
-<token>
-4️⃣ Token Signature Verification
+### 5. MinIO bucket
 
-The library verifies the token using your Django SECRET_KEY.
+1. Open the MinIO console at `http://localhost:9001` (or your `MINIO_CONSOLE_PORT`).
+2. Log in with `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` from `.env`.
+3. Create a bucket whose name matches **`AWS_STORAGE_BUCKET_NAME`** (default `mybucket`).
 
-It checks:
+### 6. Django database migrations
 
-signature valid?
-token expired?
-token type correct?
+```bash
+python manage.py migrate
+python manage.py createsuperuser   # optional, for /admin/
+```
 
-If any of these fail → 401 Unauthorized.
+### 7. (Optional) Import sample movies from TMDB
 
-5️⃣ Payload Is Decoded
+```bash
+python manage.py import_tmdb_movies
+```
 
-If the token is valid, the payload is decoded:
+Requires valid TMDB credentials in `.env`.
 
-{
-  "user_id": "9"
-}
-6️⃣ DRF Fetches the User From Database
+---
 
-The authentication class runs something like:
+## Running the stack
 
-User.objects.get(id=payload["user_id"])
+Run these in **separate terminals** (with the venv activated):
 
-Now DRF has the actual user object.
+| Process | Command |
+| --- | --- |
+| API | `python manage.py runserver` |
+| Celery worker | `celery -A config worker -l info` |
 
-7️⃣ request.user Is Assigned
+Optional concurrency:
 
-DRF sets:
+```bash
+celery -A config worker --concurrency=4 -l info
+```
 
-request.user = user
-request.auth = token
+Development email uses the **console backend** (`EMAIL_BACKEND` in settings) — verification and reset links are printed in the terminal, not sent over SMTP.
 
-Now inside your view you can access:
+**Health check:** API root is under `/api/` (for example `GET /api/movies/`). Admin: `/admin/`.
 
-request.user
+---
 
-Example:
+## Environment variables
 
-def get(self, request):
-    print(request.user.email)
-🧠 Important Security Detail
+| Variable | Purpose |
+| --- | --- |
+| `DJANGO_SECRET_KEY` | Signing (JWT, sessions, tokens) |
+| `DJANGO_DEBUG` | Debug mode (`true` / `false`) |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated hosts when `DEBUG` is false |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | PostgreSQL |
+| `REDIS_PORT` | Host port for Redis container |
+| `CELERY_BROKER_URL` | Redis URL for Celery (must match host Redis port) |
+| `CELERY_RESULT_BACKEND` | Typically `django-db` (results in PostgreSQL) |
+| `DOMAIN`, `DEFAULT_FROM_EMAIL` | Links in verification / reset emails |
+| `AWS_*` | MinIO / S3 credentials and bucket |
+| `MINIO_API_PORT`, `MINIO_CONSOLE_PORT` | Docker port mappings |
+| `TMDB_API_KEY`, `TMDB_ACCESS_TOKEN` | TMDB import |
+| `FASTEMBED_CACHE_DIR` | On-disk cache for embedding models |
 
-Even though the token contains:
+Full template: [`.env.example`](.env.example).
 
-"user_id": 9
+---
 
-DRF still queries the database to load the user.
+## API overview
 
-This ensures:
+Base path: **`/api/`** (users under **`/api/users/`**).
 
-user still exists
+### Users (`/api/users/`)
 
-user not disabled
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `register/` | Create account |
+| GET | `verify-email/<uid>/<token>/` | Confirm email |
+| POST | `login/` | Obtain JWT pair |
+| GET/PATCH | `profile/` | Current user profile |
+| POST | `forgot-password/` | Request reset |
+| POST | `reset-password/<uid>/<token>/` | Set new password |
 
-user permissions still valid
+JWT refresh: `POST /api/token/refresh/`
 
+### Content (`/api/`)
 
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `movies/` | List / filter / search movies |
+| GET | `movies/<id>/` | Movie detail |
+| GET | `movies/semantic-search/` | Embedding-based search |
+| GET | `movies/<id>/similar/` | Similar movies |
+| * | `watchlist/`, `watchlist/list/`, `watchlist/<id>/` | Watchlist CRUD |
+| * | `progress/`, `continue/` | Playback progress |
 
+Use `apitest.http` in the repo root for example requests if present.
 
+---
 
-Your backend now supports:
+## Useful commands
 
-User Registration
-Email Verification
-Login (JWT)
-Profile Retrieval
-Profile Update
-Service Layer Architecture
-Signals
-Transactions
+```bash
+# Migrations
+python manage.py makemigrations
+python manage.py migrate
 
+# Shell
+python manage.py shell_plus   # requires django-extensions
 
+# Celery (same as above)
+celery -A config worker -l info
+```
 
-Next Feature (Day 3 Advanced)
-Next we should implement Password Reset Flow, which includes:
-Forgot password
-Email reset link
-Token validation
-Set new password
+PostgreSQL CLI examples: [`commands.md`](commands.md).
 
-This will teach you:
+---
 
-token-based security
+## Further notes
 
-time-limited links
+Longer architecture walkthroughs (JWT lifecycle, password-reset tokens, Celery/Redis patterns, MinIO upload flows, recommendation types) are kept in [`readme_copy.md`](readme_copy.md) as supplementary learning material.
 
-email flows
-
-safe password handling
-
-
-POST /forgot-password
-↓
-generate reset token
-↓
-send email with reset link
-
-POST /reset-password/<uid>/<token>
-↓
-verify token
-↓
-set new password
-
-
-🧠 Why Stateless Tokens Are Better
-
-When we use Django’s token generator (like PasswordResetTokenGenerator), the system does not store tokens in the database.
-
-Instead the token is generated using:
-
-user_id
-password hash
-timestamp
-secret key
-
-So every time we verify a token, Django recomputes the expected token and compares it.
-
-
-🧠 Why This Is Secure
-
-Because the token depends on the user’s password hash.
-
-If the user resets their password:
-
-password hash changes
-
-Old tokens automatically become invalid.
-
-No manual cleanup required.
-
-
-
-New workflow using background task
-Client request
-↓
-Create user
-↓
-Queue email task
-↓
-Return response immediately
-↓
-Worker sends email in background
-
-
-Client
-  │
-  ▼
-Django API (handles HTTP)
-  │
-  │ enqueue task
-  ▼
-Redis (message queue) (stores tasks)
-  │
-  ▼
-Celery Worker (executes tasks)
-  │
-  ▼
-Send Email
-
-Importantance of background worker.
-    emails
-    notifications
-    image processing
-    video encoding
-    AI jobs
-    analytics
-    report generation
-
-Important Architecture Concept
-    Your system now has two processes.
-    Web Server
-    Handles API requests.
-        Django
-        Gunicorn
-        Uvicorn
-
-    Worker Server
-    Handles background jobs.
-        Celery worker
-
-Instead of this:
-    register → wait for email → respond
-you get:
-    register → queue email → respond immediately
-
-
-Message Queue (Celery Broker)
-    This is what we discussed earlier.
-    Django pushes task
-    ↓
-    Redis stores task
-    ↓
-    Celery worker processes task
-
-    Example tasks:
-
-    send email
-    generate embeddings
-    process uploaded files
-
-
-
-Use of Redis:
-1. Caching (Most CommoN)
-    User requests movie list
-    ↓
-    Check Redis cache
-    ↓
-    If exists → return instantly
-    If not → query database
-    Example:
-        cache.set("movie_list", data, timeout=300)
-
-2. Message Queue (Celery Broker)
-This is what we discussed earlier.
-    Django pushes task
-    ↓
-    Redis stores task
-    ↓
-    Celery worker processes task
-    Example tasks:
-        send email
-        generate embeddings
-        process uploaded files
-
-3. Rate Limiting / Throttling
-Redis is often used to store counters like:
-    user:123:request_count
-Example:
-    10 requests per minute
-Because Redis operations are extremely fast.
-
-4. Session Storage
-Instead of storing sessions in the database:
-    user session
-    ↓
-    stored in Redis
-
-Benefits:
-    faster login systems
-    better scaling for large apps
-    Django supports this with:
-    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-
-5. Real-Time Features
-Redis can also power:
-    live notifications
-    chat systems
-    websocket events
-Especially with Django Channels.
-
-Client
-   │
-   ▼
-Django API
-   │
-   ├── PostgreSQL (database)
-   │
-   ├── Redis (cache + queue)
-   │
-   └── Celery Workers (background jobs)
-
-Commands: 
-celery -A config worker -l info # Celery actually creates a pool of worker processes (by default based on CPU cores).
-custom core allocation:
-    celery -A config worker --concurrency=4
-
-Example on a 4-core machine:
-    Celery Worker
-    ├─ Process 1
-    ├─ Process 2
-    ├─ Process 3
-    └─ Process 4
-Each process can execute a task independently.
-
-Suppose 4 tasks arrive:
-    send_email
-    generate_embeddings
-    process_csv
-    rebuild_search_index
-
-With one worker process:
-    Task1 → Task2 → Task3 → Task4
-Everything runs sequentially.
-
-With multiple worker processes:
-    Worker1 → send_email
-    Worker2 → generate_embeddings
-    Worker3 → process_csv
-    Worker4 → rebuild_search_index
-
-Important Insight
-Celery doesn’t rely on async/await.
-Instead it uses:
-    separate processes
-    message queues
-    parallel workers
-
-
-
-# Semantic search Implementation..
-
-Phase1 Now: Store embeddings in PostgreSQL
-Phase2 Later: Move to vector DB (FAISS / Pinecone)
-
-Architecture:
-    Movie
-    ├ title
-    ├ description
-    └ embedding (vector)
-
-Flow
-    Movie created
-    ↓
-    Celery task generates embedding
-    ↓
-    Embedding stored in DB
-
-Search:
-    User query
-    ↓
-    Convert to embedding
-    ↓
-    Compare with movie embeddings
-    ↓
-    Return most similar movies
-
-
-What Actually Happens at 1M Movies
-    Load 1,000,000 rows from DB
-    ↓
-    Loop in Python
-    ↓
-    Compute cosine similarity 1,000,000 times
-    (O(N) → linear scan. Brute-force vector search)
-
-solutions:
-Approximate Nearest Neighbor (ANN)
-    FAISS
-    Pinecone
-    Weaviate
-
-
-
-# minIO considering
-MinIO is a high-performance, open-source object storage system designed for cloud-native applications. Think of it as a lightweight alternative to services like Amazon S3—but you can run it on your own infrastructure.
-☁️ S3-compatible API
-It fully supports the Amazon S3 API, which means tools built for S3 usually work with MinIO without changes.
-minIO vs AWS s3
-| Feature          | MinIO              | Amazon S3       |
-| ---------------- | ------------------ | --------------- |
-| Deployment       | Self-hosted        | Managed cloud   |
-| Cost             | Free (open source) | Pay-as-you-go   |
-| Control          | Full control       | Limited         |
-| Setup complexity | Requires setup     | No setup needed |
-
-Why MinIO works here
-S3-compatible: Django has packages like django-storages that support S3. MinIO implements the same API, so you just point django-storages to your local MinIO server.
-Local dev friendly: You can run MinIO on your machine via Docker, store videos locally inside MinIO, and test uploading/serving.
-Easy switch to production: When ready, you can switch your storage backend to AWS S3 or another cloud provider with minimal code changes.
-
-* current flow
-    Frontend → Django → MinIO
-    problem:
-        Video goes through Django server
-        → heavy load
-        → slow uploads
-        → server bottleneck ❌
-* better
-    Client → S3 directly (pre-signed URL)
-    Frontend → MinIO (direct upload)
-    Django → only generates signed URL
-    solution:
-        Why This Is Better
-            Faster uploads
-            Less backend load
-            Scales easily
-            Used by Netflix / AWS systems
-
-
-Recommendation Types (We’ll Build Step-by-Step)
-GET /api/movies/recommend/?movie_id=1
-Recommendations should be based on:
-
-A: Similar movies (embedding)
-B: User watch history
-C: Combination
-
-1. Content-Based
-    Use embeddings
-    Find similar movies
-    embeddings ✅
-    cosine similarity ✅
-
-2. Personalized Recommendations
-    Based on:
-    - watch history
-    - genres
-    - behavior
-
-3. Trending / Popular
-Most watched movies
-
-GET /api/movies/1/similar/
+When you change behavior or add endpoints, update this README and `.env.example` together so new developers can still bring the stack up with one compose file and one env template.
