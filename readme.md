@@ -199,9 +199,9 @@ This starts:
 
 ### 5. MinIO bucket
 
-1. Open the MinIO console at `http://localhost:9001` (or your `MINIO_CONSOLE_PORT`).
-2. Log in with `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` from `.env`.
-3. Create a bucket whose name matches **`AWS_STORAGE_BUCKET_NAME`** (default `mybucket`).
+MinIO does not create buckets by itself. In `DEBUG`, Django creates **`AWS_STORAGE_BUCKET_NAME`** (default `mybucket`) on first upload if it is missing.
+
+To create it manually: open `http://localhost:9001` (or your `MINIO_CONSOLE_PORT`), log in with `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, and create a bucket with that name.
 
 ### 6. Django database migrations
 
@@ -255,6 +255,9 @@ Development email uses the **console backend** (`EMAIL_BACKEND` in settings) —
 | `DOMAIN`, `DEFAULT_FROM_EMAIL` | Links in verification / reset emails |
 | `AWS_*` | MinIO / S3 credentials and bucket |
 | `MINIO_API_PORT`, `MINIO_CONSOLE_PORT` | Docker port mappings |
+| `CORS_ALLOWED_ORIGINS` | Frontend origins (CORS + CSRF trusted origins) |
+| `THROTTLE_RATE_USER`, `THROTTLE_RATE_ANON`, `THROTTLE_RATE_AUTH` | DRF rate limits (default `300/min`, `120/min`, `20/min`) |
+| `THROTTLE_DISABLE_IN_DEBUG` | When `true` (default), no global API throttling while `DJANGO_DEBUG=true` |
 | `TMDB_API_KEY`, `TMDB_ACCESS_TOKEN` | TMDB import |
 | `FASTEMBED_CACHE_DIR` | On-disk cache for embedding models |
 
@@ -317,3 +320,7 @@ PostgreSQL CLI examples: [`commands.md`](commands.md).
 Longer architecture walkthroughs (JWT lifecycle, password-reset tokens, Celery/Redis patterns, MinIO upload flows, recommendation types) are kept in [`readme_copy.md`](readme_copy.md) as supplementary learning material.
 
 When you change behavior or add endpoints, update this README and `.env.example` together so new developers can still bring the stack up with one compose file and one env template.
+
+### Frontend (`moviehub-web`)
+
+The web UI lives in **`../moviehub-web`** (sibling folder under the same `moviehub/` workspace). It talks to this API over JSON + JWT. Configure `CORS_ALLOWED_ORIGINS` and optionally set `DOMAIN` to the frontend base URL (e.g. `http://localhost:5173`) for verification links.

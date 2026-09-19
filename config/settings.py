@@ -59,6 +59,7 @@ ALLOWED_HOSTS = [h.strip() for h in _allowed.split(",") if h.strip()]
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,6 +79,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -167,18 +169,23 @@ STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = "users.User" # Tells Django to Use Custom User
 
+THROTTLE_RATE_USER = os.environ.get("THROTTLE_RATE_USER", "300/min")
+THROTTLE_RATE_ANON = os.environ.get("THROTTLE_RATE_ANON", "120/min")
+# Sensitive flows (forgot password) — separate scope, stricter default
+THROTTLE_RATE_AUTH = os.environ.get("THROTTLE_RATE_AUTH", "20/min")
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        'rest_framework.authentication.SessionAuthentication'
     ),
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.AnonRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "user": "10/min",
-        "anon": "3/min",
+        "user": THROTTLE_RATE_USER,
+        "anon": THROTTLE_RATE_ANON,
+        "auth": THROTTLE_RATE_AUTH,
     },
     "DEFAULT_PAGINATION_CLASS":"rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 7,
@@ -188,10 +195,57 @@ REST_FRAMEWORK = {
     ]
 }
 
+# Local dev: SPA + React Strict Mode easily exceeds 3/min anon. Disable global throttling in DEBUG.
+if DEBUG and env_bool("THROTTLE_DISABLE_IN_DEBUG", True):
+    REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
+
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # will not send the real mail only console logs.
 
 DOMAIN = os.environ.get("DOMAIN", "http://localhost:8000")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@example.com")
+
+_default_cors = "http://localhost:5173,http://127.0.0.1:5173"
+_cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", _default_cors)
+_frontend_origins = [
+    o.strip() for o in _cors_origins.split(",") if o.strip()
+] or [o.strip() for o in _default_cors.split(",")]
+
+CORS_ALLOWED_ORIGINS = _frontend_origins
+
+# Required for POST from the Vite dev server (Origin: http://localhost:5173), including proxied /api calls.
+CSRF_TRUSTED_ORIGINS = _frontend_origins
+
+# Dev: allow the Vite app (any port) to call the API directly when not using the proxy.
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+)
+
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
+
+
+def _show_debug_toolbar(request):
+    if not DEBUG:
+        return False
+    if request.path.startswith("/api/"):
+        return False
+    return True
+
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": "config.settings._show_debug_toolbar",
+}
 
 
 SIMPLE_JWT = {
@@ -223,7 +277,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Use S3 backend (MinIO compatible)
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "BACKEND": "config.storage.MediaStorage",
     },
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",

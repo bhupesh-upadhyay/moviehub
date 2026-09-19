@@ -11,11 +11,17 @@ from django.db.models import Count
 from django.utils.timezone import now
 from datetime import timedelta
 from rest_framework import status
-from .serializers import MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory, MovieListSerializer
-from .models import Movie, Watchlist, WatchHistory
+from .serializers import GenreSerializer, MovieSerializer, WatchlistSerializer, WatchHistorySerializer, WatchHistory, MovieListSerializer
+from .models import Genre, Movie, Watchlist, WatchHistory
 from .services import EmbeddingService
 from .utils import cosine_similarity
 # Create your views here.
+
+class GenreListAPIView(ListAPIView):
+    queryset = Genre.objects.all().order_by("name")
+    serializer_class = GenreSerializer
+    pagination_class = None
+
 
 class MovieListAPIView(APIView):
     def get(self, request):
@@ -41,7 +47,7 @@ class MovieListAPIView(APIView):
 
         # 📄 PAGINATION
         page = request.query_params.get("page", 1)
-        page_size = 10
+        page_size = 12
 
         paginator = Paginator(queryset, page_size)
         page_obj = paginator.get_page(page)
@@ -354,7 +360,7 @@ class SimilarViewsAPIView(APIView):
             result.append((m, final_score))
         
         result.sort(key=lambda x: x[1], reverse=True)
-        top_movies = [item[0] for item in result[:10]]
+        top_movies = [item[0] for item in result[:20]]
         serializers = MovieListSerializer(top_movies, many=True)
         return Response(serializers.data)
         
