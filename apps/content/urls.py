@@ -5,6 +5,7 @@ from .views import (
     WatchlistDeleteView,
     WatchProgressAPIView,
     ContinueWatchingAPIView,
+    GenreListAPIView,
     MovieListAPIView,
     MovieDetailAPIView,
     SemanticSearchAPIView,
@@ -13,6 +14,7 @@ from .views import (
 
 # GET /api/content
 urlpatterns = [
+    path("genres/", GenreListAPIView.as_view(), name="genrelist"),
     path("movies/", MovieListAPIView.as_view(), name='movielist'),
     path("movies/<int:pk>/", MovieDetailAPIView.as_view(), name='moviedetail'),
     path("watchlist/", WatchlistCreateView.as_view()),

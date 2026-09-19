@@ -48,6 +48,9 @@ class UserService:
         with transaction.atomic():
             # is because passwords must be hashed, not saved as plain text.
             password = validated_data.pop("password")
+            username = validated_data.get("username") or ""
+            if not validated_data.get("first_name") and username and "@" not in username:
+                validated_data["first_name"] = username[:1].upper() + username[1:]
             user = User.objects.create_user(password=password, **validated_data)
             UserProfile.objects.create(user=user)
 

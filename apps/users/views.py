@@ -7,7 +7,8 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.throttling import AnonRateThrottle
+
+from .throttles import AuthAnonRateThrottle
 
 from .serializers import RegisterSerializer, UserSerializer, LoginSerializer, UserProfileSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
 from .services import UserService, AuthService
@@ -95,7 +96,7 @@ class ProfileView(RetrieveUpdateAPIView):
         return profile
     
 class ForgotPasswordView(APIView):
-    throttle_classes = [AnonRateThrottle]
+    throttle_classes = [AuthAnonRateThrottle]
     def post(self, request):
         serialzer = ForgotPasswordSerializer(data=request.data)
         

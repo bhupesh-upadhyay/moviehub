@@ -31,7 +31,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "username"]
+        fields = ["id", "email", "username", "first_name"]
         
 """
 Analogy:
@@ -99,11 +99,22 @@ class LoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
-    username = serializers.CharField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', required=False, allow_blank=True)
+
     class Meta:
         model = UserProfile
-        fields = ['id', 'bio', 'avatar', 'date_of_birth', 'created_at', 'updated_at', 'username', 'email']
+        fields = ['id', 'bio', 'avatar', 'date_of_birth', 'created_at', 'updated_at', 'username', 'email', 'first_name']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+        instance = super().update(instance, validated_data)
+        first_name = user_data.get('first_name')
+        if first_name is not None:
+            instance.user.first_name = first_name.strip()
+            instance.user.save(update_fields=['first_name'])
+        return instance
         
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
