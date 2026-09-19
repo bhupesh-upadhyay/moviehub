@@ -1,0 +1,821 @@
+---
+description: Master architecture and roadmap for the MovieHub FastAPI AI service
+alwaysApply: true
+---
+
+# MovieHub AI Service
+
+## PROJECT GOAL
+
+Build a production-inspired AI service for the existing MovieHub application using FastAPI.
+
+The purpose is simultaneously:
+
+1. Build a real AI service.
+2. Learn FastAPI deeply.
+3. Learn production backend engineering.
+4. Learn GenAI engineering.
+5. Understand how modern AI applications are architected.
+6. Learn by implementing the underlying concepts rather than blindly using frameworks.
+
+---
+
+# EXISTING ARCHITECTURE
+
+MovieHub already has a Django/DRF backend.
+
+Django remains responsible for core MovieHub functionality.
+
+Django responsibilities:
+
+- Users
+- Authentication
+- Movies
+- Actors
+- Genres
+- Watchlist
+- Watch history
+- Movie APIs
+- TMDB integration
+- Core business logic
+- Existing PostgreSQL data
+- Existing Redis/Celery infrastructure
+- Existing embedding generation
+- Existing semantic movie search
+
+DO NOT migrate the existing Django backend to FastAPI.
+
+FastAPI is a new AI service.
+
+---
+
+# TARGET ARCHITECTURE
+
+Frontend
+    |
+    +--------------------+
+    |                    |
+    v                    v
+Django Backend      FastAPI AI Service
+    |                    |
+    |                    v
+    |              AI Orchestrator
+    |                    |
+    |       +------------+-------------+
+    |       |            |             |
+    |       v            v             v
+    |   Retrieval       LLM          Tools
+    |       |                          |
+    |       v                          v
+    |   Embeddings                Django APIs
+    |       |
+    +-------+
+            |
+       PostgreSQL /
+       Vector Storage
+
+The exact service communication architecture should be decided during implementation after understanding the trade-offs.
+
+---
+
+# DEVELOPMENT PRINCIPLE
+
+The project itself is the curriculum.
+
+Do NOT first finish a generic FastAPI course and then build the AI service.
+
+Instead:
+
+Feature
+    ↓
+Required concepts
+    ↓
+Learn concepts
+    ↓
+Design
+    ↓
+Implement
+    ↓
+Test
+    ↓
+Production considerations
+    ↓
+Next feature
+
+---
+
+# ULTIMATE AI SERVICE ROADMAP
+
+The following phases define the intended evolution of the MovieHub AI service.
+
+Do NOT implement all phases at once.
+
+Progress through them sequentially.
+
+---
+
+# PHASE 0 — EXISTING MOVIEHUB UNDERSTANDING
+
+Before modifying anything:
+
+Understand:
+
+- Django architecture
+- Existing apps
+- Models
+- Services
+- APIs
+- PostgreSQL
+- Redis
+- Celery
+- Docker
+- Environment configuration
+- Movie embeddings
+- Semantic search
+- Similar movie search
+
+Create an architecture understanding before implementation.
+
+Do not rewrite existing functionality unnecessarily.
+
+---
+
+# PHASE 1 — FASTAPI FOUNDATION
+
+Create the FastAPI AI service.
+
+Learn through implementation:
+
+- FastAPI application
+- Uvicorn
+- Routing
+- APIRouter
+- HTTP methods
+- Path parameters
+- Query parameters
+- Request bodies
+- Pydantic
+- Response models
+- Validation
+- Status codes
+- Exception handling
+- Dependency injection
+- Configuration
+- Environment variables
+- OpenAPI documentation
+- Project structure
+
+Goal:
+
+Understand how a production API is structured.
+
+---
+
+# PHASE 2 — PRODUCTION FASTAPI FOUNDATION
+
+Introduce production backend concepts as the service grows.
+
+Learn:
+
+- Service layer
+- Dependency management
+- Database lifecycle
+- Connection pooling
+- Async vs sync
+- Middleware
+- Authentication
+- Authorization
+- Logging
+- Configuration management
+- Error handling
+- Health checks
+- Testing
+- Integration testing
+- Docker
+
+Do not introduce concepts until they become useful to the current feature.
+
+---
+
+# PHASE 3 — BASIC LLM CHAT
+
+Build:
+
+POST /api/ai/chat
+
+Initial architecture:
+
+User
+ ↓
+FastAPI
+ ↓
+LLM
+ ↓
+Response
+
+Learn:
+
+- What an LLM is
+- Tokens
+- Context windows
+- System messages
+- User messages
+- Assistant messages
+- Prompt construction
+- Model parameters
+- Temperature
+- Structured output
+- LLM API calls
+- Timeouts
+- Retries
+- Errors
+- Rate limits
+- Cost
+
+Initially use direct LLM SDK/API calls.
+
+Do not introduce LangChain yet.
+
+---
+
+# PHASE 4 — MOVIE-AWARE AI
+
+Make the LLM aware of MovieHub data.
+
+Example:
+
+User:
+"Tell me about Interstellar."
+
+Flow:
+
+User
+ ↓
+FastAPI
+ ↓
+Movie retrieval
+ ↓
+Movie data
+ ↓
+Context construction
+ ↓
+LLM
+ ↓
+Answer
+
+Learn:
+
+- Grounding
+- Context injection
+- Application truth vs generated text
+- Hallucination
+- Prompt construction
+- Context limits
+
+The LLM must not be treated as the source of truth for MovieHub database information.
+
+---
+
+# PHASE 5 — EMBEDDINGS
+
+Reuse the existing MovieHub embedding system.
+
+Learn:
+
+- What embeddings are
+- Text → vector
+- Dimensions
+- Similarity
+- Cosine similarity
+- Document embeddings
+- Query embeddings
+- Semantic search
+- Embedding model selection
+
+Understand the existing MovieHub semantic-search implementation before replacing or improving it.
+
+---
+
+# PHASE 6 — RAG
+
+Build a real RAG pipeline.
+
+Target architecture:
+
+User Question
+      ↓
+Query Embedding
+      ↓
+Retrieval
+      ↓
+Top-K relevant movies
+      ↓
+Context construction
+      ↓
+LLM
+      ↓
+Answer
+
+Learn:
+
+- Retrieval-Augmented Generation
+- Retrieval vs generation
+- Top-K
+- Similarity thresholds
+- Chunking
+- Context construction
+- Context limits
+- Retrieval quality
+- Grounding
+- Hallucination
+- RAG failure modes
+- Source attribution
+
+Initially implement the retrieval mechanism ourselves.
+
+Do not immediately introduce a vector database framework.
+
+---
+
+# PHASE 7 — CONVERSATION MEMORY
+
+Add conversations.
+
+Conceptual model:
+
+Conversation
+    |
+    +── Message
+    +── Message
+    +── Message
+
+Example:
+
+User:
+"Recommend a space movie."
+
+AI:
+"Interstellar."
+
+User:
+"What about something more action-oriented?"
+
+AI should understand the previous context.
+
+Learn:
+
+- Stateless HTTP
+- Conversation state
+- Message history
+- Context windows
+- Token limits
+- Short-term memory
+- Long-term memory
+- Conversation summarization
+- PostgreSQL storage
+- Redis caching where appropriate
+
+---
+
+# PHASE 8 — PERSONALIZED MOVIE ASSISTANT
+
+Use existing MovieHub user information:
+
+- Watch history
+- Watchlist
+- Previously watched movies
+- Preferences
+- Ratings where available
+
+Example:
+
+"Recommend something for me."
+
+System:
+
+User history
+    +
+Movie retrieval
+    +
+Semantic similarity
+    +
+LLM
+    ↓
+Personalized response
+
+Learn:
+
+- Personalization architecture
+- User-specific retrieval
+- Data boundaries
+- Authorization
+- Privacy
+- Personal context
+- Recommendation reasoning
+
+---
+
+# PHASE 9 — TOOL / FUNCTION CALLING
+
+Allow the LLM to use MovieHub capabilities.
+
+Potential tools:
+
+- search_movies()
+- get_movie()
+- get_similar_movies()
+- get_user_watchlist()
+- get_watch_history()
+- search_by_genre()
+- search_by_rating()
+
+Example:
+
+User:
+"Find Christopher Nolan movies above 8."
+
+Flow:
+
+User
+ ↓
+LLM
+ ↓
+Determine that a tool is needed
+ ↓
+search_movies(...)
+ ↓
+Django/PostgreSQL
+ ↓
+Tool result
+ ↓
+LLM
+ ↓
+Final response
+
+Learn:
+
+- Function calling
+- Tool schemas
+- Tool selection
+- Tool execution
+- Tool results
+- Validation
+- Authorization
+- Tool failures
+- Tool loops
+- Security
+- Prompt injection
+
+Understand tool calling before calling the system an "agent."
+
+---
+
+# PHASE 10 — STREAMING
+
+Stream LLM responses.
+
+Learn:
+
+- Async generators
+- Streaming
+- SSE
+- WebSockets when appropriate
+- Connection lifecycle
+- Client disconnects
+- Cancellation
+- Backpressure
+- Partial responses
+
+Target:
+
+User
+ ↓
+FastAPI
+ ↓
+LLM
+ ↓
+Token stream
+ ↓
+Client
+
+---
+
+# PHASE 11 — REDIS AND CACHING
+
+Introduce Redis only where useful.
+
+Potential uses:
+
+- Response caching
+- Conversation state
+- Rate limiting
+- Temporary AI state
+- Distributed coordination
+
+Learn:
+
+- Cache keys
+- TTL
+- Cache invalidation
+- Cache stampede
+- Rate limiting
+- Distributed state
+
+Every Redis usage must have a clear reason.
+
+---
+
+# PHASE 12 — CELERY / BACKGROUND AI WORK
+
+Use Celery for jobs that should not block normal requests.
+
+Examples:
+
+New movie
+ ↓
+Generate embedding
+ ↓
+Generate metadata
+ ↓
+Store result
+
+Other possible background tasks:
+
+- Embedding generation
+- Batch processing
+- AI metadata generation
+- Evaluation jobs
+
+Learn:
+
+- Task queues
+- Workers
+- Retries
+- Idempotency
+- Failure handling
+- Scheduling
+- Redis broker
+- Long-running jobs
+
+Do not use Celery for normal synchronous chat requests unless there is a specific architectural reason.
+
+---
+
+# PHASE 13 — PRODUCTION HARDENING
+
+Learn and implement where appropriate:
+
+## Security
+
+- Authentication
+- Authorization
+- Service-to-service authentication
+- Input validation
+- Prompt injection protection
+- Secret management
+- Rate limiting
+
+## Reliability
+
+- Timeouts
+- Retries
+- Idempotency
+- Failure handling
+- Graceful degradation
+- Circuit breaker concepts
+
+## Observability
+
+- Structured logging
+- Metrics
+- Tracing concepts
+- Request IDs
+- AI request tracking
+- Token usage
+- Cost tracking
+
+## Infrastructure
+
+- Docker
+- Docker Compose
+- Production configuration
+- Health checks
+- Readiness/liveness
+- Graceful shutdown
+
+---
+
+# PHASE 14 — AI EVALUATION
+
+The system must not be considered successful merely because the API works.
+
+Create an evaluation dataset.
+
+Example:
+
+Question
+Expected information
+Retrieved documents
+Generated answer
+
+Evaluate:
+
+- Retrieval relevance
+- Retrieval recall
+- Answer relevance
+- Groundedness
+- Hallucination
+- Tool accuracy
+- Latency
+- Token usage
+- Cost
+
+Learn:
+
+- AI evaluation
+- RAG evaluation
+- Regression testing
+- Golden datasets
+- Quality metrics
+
+---
+
+# PHASE 15 — AI PERFORMANCE AND COST
+
+Optimize the system.
+
+Learn:
+
+- Token usage
+- Context optimization
+- Prompt optimization
+- Model selection
+- Retrieval optimization
+- Caching
+- Batch processing
+- Latency optimization
+- Streaming
+- Cost estimation
+
+Do not optimize prematurely.
+
+Measure first.
+
+---
+
+# PHASE 16 — AGENTIC SYSTEMS
+
+Only after understanding:
+
+- LLMs
+- RAG
+- Memory
+- Tool calling
+- Streaming
+- Evaluation
+
+introduce agents.
+
+Learn:
+
+- What an agent is
+- Agent loop
+- Planning
+- Tool selection
+- Tool execution
+- Observation
+- Iteration
+- Termination
+- Agent failures
+- Agent security
+- Agent evaluation
+
+Build a simple agent ourselves before introducing agent frameworks.
+
+---
+
+# PHASE 17 — GENAI FRAMEWORKS
+
+Only after understanding the primitives, evaluate:
+
+- LangChain
+- LangGraph
+- LlamaIndex
+- Vector database abstractions
+- Other relevant frameworks
+
+For each framework explain:
+
+1. What problem does it solve?
+2. What does it abstract?
+3. How does it work conceptually?
+4. What did we previously implement ourselves?
+5. What are its advantages?
+6. What are its disadvantages?
+7. When should we use it?
+8. When should we avoid it?
+
+Do not introduce frameworks simply because they are popular.
+
+---
+
+# PHASE 18 — MINI LLM
+
+After understanding AI application development, create a separate educational mini-project.
+
+Goal is understanding, NOT building a production LLM.
+
+Learn:
+
+Dataset
+ ↓
+Tokenizer
+ ↓
+Token IDs
+ ↓
+Embeddings
+ ↓
+Attention
+ ↓
+Transformer
+ ↓
+Next-token prediction
+ ↓
+Loss
+ ↓
+Gradient descent
+ ↓
+Training
+ ↓
+Inference
+
+This phase connects the application-level GenAI concepts with ML fundamentals.
+
+---
+
+# FINAL TARGET ARCHITECTURE
+
+The eventual MovieHub AI service should conceptually look like:
+
+                         User
+                           |
+                           v
+                     FastAPI API
+                           |
+                           v
+                    AI Orchestrator
+                           |
+        +------------------+------------------+
+        |                  |                  |
+        v                  v                  v
+    Retrieval             LLM              Tools
+        |                  |                  |
+        v                  |                  v
+    Embeddings             |            Django APIs
+        |                  |
+        +---------+--------+
+                  |
+                  v
+           Context / Memory
+                  |
+                  v
+             Final Answer
+                  |
+                  v
+                User
+
+Supporting infrastructure:
+
+FastAPI
+PostgreSQL
+Redis
+Celery
+Docker
+LLM provider
+Embedding model
+Vector storage/search
+Monitoring/evaluation
+
+---
+
+# IMPORTANT
+
+Do not skip directly to advanced phases.
+
+Do not implement future phases prematurely.
+
+At every phase:
+
+1. Understand the requirement.
+2. Identify the concepts needed.
+3. Learn those concepts.
+4. Design the solution.
+5. Implement it.
+6. Test it.
+7. Debug it.
+8. Discuss production considerations.
+9. Only then move forward.
+
+The ultimate objective is not merely a working MovieHub AI.
+
+The objective is for me to understand how to design and build production-grade AI backends myself.

@@ -1,0 +1,249 @@
+---
+description: Production backend and infrastructure rules for MovieHub AI
+globs:
+  - "ai_service/**/*"
+  - "docker-compose.yml"
+  - "Dockerfile"
+---
+
+# Production Engineering Rules
+
+MovieHub AI should evolve toward a production-inspired backend.
+
+Do not over-engineer early phases.
+
+Introduce production concepts when the project actually requires them.
+
+---
+
+# SERVICE ARCHITECTURE
+
+Teach:
+
+- Service boundaries
+- Django vs FastAPI responsibilities
+- API contracts
+- Coupling
+- Dependency management
+- Separation of concerns
+- Failure boundaries
+
+Django:
+
+Core MovieHub business logic.
+
+FastAPI:
+
+AI orchestration and AI-specific functionality.
+
+---
+
+# DJANGO ↔ FASTAPI
+
+Teach the architectural options:
+
+1. FastAPI calls Django APIs.
+2. FastAPI directly accesses shared PostgreSQL.
+3. Shared database with carefully defined responsibilities.
+4. Other service-to-service patterns when appropriate.
+
+Explain:
+
+- Coupling
+- Security
+- Performance
+- Data ownership
+- Maintainability
+- Production trade-offs
+
+Do not choose an architecture blindly.
+
+---
+
+# DATABASE
+
+Teach:
+
+- PostgreSQL
+- Connection pooling
+- Transactions
+- Query optimization
+- Indexing
+- Data ownership
+- Vector storage
+- pgvector when appropriate
+
+Do not introduce a vector database just because it is popular.
+
+---
+
+# REDIS
+
+Use Redis only when there is a clear reason.
+
+Potential uses:
+
+- Caching
+- Rate limiting
+- Temporary state
+- Conversation state
+- Distributed coordination
+
+Teach:
+
+- TTL
+- Cache invalidation
+- Cache keys
+- Cache stampede
+- Distributed state
+
+---
+
+# CELERY
+
+Use Celery for appropriate background jobs.
+
+Examples:
+
+- Embedding generation
+- Batch AI processing
+- Movie metadata generation
+- Evaluation jobs
+
+Teach:
+
+- Task queue
+- Worker
+- Broker
+- Retry
+- Idempotency
+- Failure handling
+- Scheduling
+
+Do not use Celery unnecessarily for normal chat requests.
+
+---
+
+# CONFIGURATION
+
+Teach:
+
+- Environment variables
+- .env
+- Development configuration
+- Production configuration
+- Secret management
+- Configuration validation
+
+Never hardcode secrets.
+
+---
+
+# SECURITY
+
+Teach:
+
+- Authentication
+- Authorization
+- Service authentication
+- Input validation
+- Rate limiting
+- Secret management
+- Prompt injection
+- Tool authorization
+- User data isolation
+
+---
+
+# RELIABILITY
+
+Teach:
+
+- Timeouts
+- Retries
+- Exponential backoff
+- Idempotency
+- Graceful failure
+- External API failures
+- LLM failures
+- Circuit breaker concepts
+
+---
+
+# OBSERVABILITY
+
+Teach:
+
+- Structured logging
+- Request IDs
+- Error tracking
+- Metrics
+- Tracing concepts
+- LLM latency
+- Token usage
+- AI cost
+- Retrieval information
+
+---
+
+# TESTING
+
+Teach:
+
+- Unit tests
+- Integration tests
+- API tests
+- Database tests
+- External API mocks
+- LLM mocks
+- RAG evaluation
+- Regression tests
+
+---
+
+# DOCKER
+
+Teach:
+
+- Dockerfile
+- Docker Compose
+- Service networking
+- Environment variables
+- Volumes
+- Health checks
+- Development vs production containers
+
+---
+
+# PERFORMANCE
+
+Teach:
+
+- Async I/O
+- Connection pooling
+- Caching
+- Database optimization
+- Retrieval optimization
+- LLM latency
+- Token optimization
+- Streaming
+
+Do not optimize before measuring.
+
+---
+
+# PRODUCTION RULE
+
+A feature is not complete merely because it works locally.
+
+When appropriate, discuss:
+
+- Failure modes
+- Security
+- Testing
+- Observability
+- Performance
+- Scalability
+- Deployment
+
+But don't add unnecessary infrastructure just to make the project look complex.

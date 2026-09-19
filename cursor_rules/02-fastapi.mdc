@@ -1,0 +1,207 @@
+---
+description: FastAPI concepts to teach progressively while building MovieHub AI
+globs:
+  - "ai_service/**/*.py"
+  - "ai_service/**/*.pyi"
+---
+
+# FastAPI Learning Rules
+
+FastAPI must be taught progressively through the MovieHub AI project.
+
+Do NOT teach all FastAPI concepts upfront.
+
+Introduce a concept when the current feature requires it.
+
+---
+
+# FUNDAMENTALS
+
+Teach when relevant:
+
+- FastAPI application
+- Uvicorn
+- Routing
+- HTTP methods
+- Path parameters
+- Query parameters
+- Request bodies
+- Pydantic
+- Validation
+- Response models
+- Status codes
+- APIRouter
+- OpenAPI
+- Swagger documentation
+- Exception handling
+
+---
+
+# DEPENDENCY INJECTION
+
+Teach:
+
+- What dependency injection is
+- Why it exists
+- How FastAPI Depends works
+- Dependency lifecycle
+- Nested dependencies
+- Database dependencies
+- Authentication dependencies
+- Testing dependencies
+
+Do not use Depends without explaining why.
+
+---
+
+# ASYNC
+
+Teach:
+
+- async
+- await
+- coroutine
+- event loop
+- blocking vs non-blocking
+- I/O-bound work
+- CPU-bound work
+- when async helps
+- when async does not help
+
+Explain why an LLM API call may benefit from async.
+
+---
+
+# APPLICATION LIFECYCLE
+
+Teach when needed:
+
+- Lifespan
+- Startup
+- Shutdown
+- Resource initialization
+- Database pools
+- HTTP clients
+- Cleanup
+
+---
+
+# ARCHITECTURE
+
+Teach:
+
+- Router layer
+- Schema layer
+- Service layer
+- Data-access layer
+- External-service clients
+- Dependency layer
+
+Do not blindly create layers.
+
+Explain why each layer exists.
+
+---
+
+# ERROR HANDLING
+
+Teach:
+
+- HTTPException
+- Custom exceptions
+- Exception handlers
+- Error response design
+- External API failures
+- LLM failures
+- Timeouts
+- Retries
+
+---
+
+# DATABASE
+
+When database access is introduced, teach:
+
+- Connection lifecycle
+- Connection pooling
+- Transactions
+- Async database access
+- ORM considerations
+- N+1 queries
+- Query performance
+
+---
+
+# AUTHENTICATION
+
+When authentication is required, teach:
+
+- Authentication vs authorization
+- JWT
+- Access tokens
+- Refresh tokens
+- Dependency-based authentication
+- Service-to-service authentication
+
+Do not implement authentication without explaining the security model.
+
+---
+
+# MIDDLEWARE
+
+Teach:
+
+- What middleware is
+- Request/response lifecycle
+- Middleware use cases
+- Logging
+- Request IDs
+- CORS
+- Authentication considerations
+
+---
+
+# TESTING
+
+Teach:
+
+- Unit tests
+- API tests
+- Integration tests
+- Dependency overrides
+- External-service mocking
+- Database testing
+- Async testing
+
+---
+
+# PRODUCTION
+
+Teach when the project reaches production concerns:
+
+- Health checks
+- Readiness
+- Graceful shutdown
+- Logging
+- Metrics
+- Configuration
+- Secrets
+- Docker
+- Performance
+
+---
+
+# RULE
+
+FastAPI knowledge must come from building MovieHub AI.
+
+Do not turn the project into a generic FastAPI tutorial.
+
+When a feature requires a FastAPI concept:
+
+1. Stop.
+2. Teach the concept.
+3. Explain why it is needed.
+4. Show where it fits.
+5. Let me implement it.
+6. Review the implementation.

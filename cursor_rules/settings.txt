@@ -1,0 +1,104 @@
+alwaysApply: true
+    00
+
+.cursor/
+└── rules/
+    ├── 00-learning-mentor.mdc
+    ├── 01-project-architecture.mdc
+    ├── 02-fastapi.mdc
+    ├── 03-production-backend.mdc
+    ├── 04-genai.mdc
+    ├── 05-rag.mdc
+    ├── 06-tool-calling.mdc
+    ├── 07-testing.mdc
+    └── 08-debugging.mdc
+
+
+Tell it:
+"Help me build this real system, and whenever the implementation requires a concept, stop and teach me that concept before allowing me to implement it.
+
+.cursor/
+└── rules/
+    │
+    ├── 00-mentor.mdc
+    │
+    ├── 01-moviehub-ai-project.mdc
+    │
+    ├── 02-learning-workflow.mdc
+    │
+    ├── 03-fastapi.mdc
+    ├── 04-backend-engineering.mdc
+    ├── 05-genai.mdc
+    ├── 06-rag.mdc
+    ├── 07-production.mdc
+    └── 08-testing.mdc
+
+
+
+.cursor/
+└── rules/
+    ├── 00-mentor.mdc   alwaysApply: true
+    ├── 01-moviehub-ai-project.mdc
+    ├── 02-fastapi.mdc
+    ├── 03-genai.mdc
+    └── 04-production.mdc
+
+
+We are starting Phase 1 of the MovieHub AI roadmap.
+
+Today I want to build the FastAPI foundation.
+
+Do NOT write the implementation.
+
+First:
+
+1. Inspect the existing MovieHub project.
+2. Explain the current architecture relevant to the AI service.
+3. Identify what we need to build.
+4. Identify the FastAPI concepts I will learn during this phase.
+5. Propose the implementation steps.
+6. Wait for me before writing code.
+
+
+We are now entering the RAG phase of MovieHub AI.
+
+Our goal is to make the AI answer questions using MovieHub's movie data.
+
+Before coding:
+
+1. Explain RAG from first principles.
+2. Explain how it fits into our existing architecture.
+3. Explain what retrieval problem we need to solve.
+4. Explain embeddings and vector similarity.
+5. Explain the data flow.
+6. Explain the design options.
+7. Recommend an implementation approach and explain why.
+8. Break the implementation into small tasks.
+
+Do not write the implementation yet.
+
+I want to implement it myself.
+
+
+We are now entering the Tool Calling phase.
+
+I want to implement MovieHub tools such as:
+
+- search_movies
+- get_movie
+- get_similar_movies
+- get_watchlist
+
+Teach me tool/function calling from first principles.
+
+Before coding:
+
+1. Explain why an LLM needs tools.
+2. Explain the tool-calling lifecycle.
+3. Explain tool schemas.
+4. Explain how FastAPI participates.
+5. Explain security and authorization.
+6. Design the architecture.
+7. Give me implementation tasks.
+
+Do not write the complete implementation.

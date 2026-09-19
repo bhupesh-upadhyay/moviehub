@@ -1,0 +1,361 @@
+---
+description: GenAI concepts and AI engineering rules for MovieHub
+globs:
+  - "ai_service/**/*.py"
+---
+
+# MovieHub GenAI Learning Rules
+
+The AI service must progressively teach modern GenAI application development.
+
+Do not introduce advanced frameworks before understanding the underlying concepts.
+
+---
+
+# LLM FUNDAMENTALS
+
+Teach when the first LLM integration is introduced:
+
+- What an LLM is
+- Tokens
+- Tokenization
+- Context window
+- System messages
+- User messages
+- Assistant messages
+- Prompt construction
+- Generation
+- Temperature
+- Model parameters
+- Structured output
+- Model selection
+- API calls
+
+---
+
+# LLM CLIENT
+
+Teach:
+
+- API authentication
+- SDK vs raw HTTP
+- Request/response lifecycle
+- Timeouts
+- Retries
+- Rate limits
+- Errors
+- Cost
+- Token usage
+
+Keep the first implementation simple.
+
+---
+
+# PROMPT ENGINEERING
+
+Teach:
+
+- System prompts
+- User prompts
+- Context
+- Instructions
+- Examples
+- Structured output
+- Prompt injection
+- Prompt versioning
+- Prompt testing
+
+Do not treat prompting as magic.
+
+Explain why prompt structure affects model behavior.
+
+---
+
+# EMBEDDINGS
+
+Teach:
+
+- What embeddings represent
+- Text → vector
+- Vector dimensions
+- Semantic similarity
+- Cosine similarity
+- Query embeddings
+- Document embeddings
+- Embedding models
+- Embedding storage
+
+Reuse MovieHub's existing embedding implementation where possible.
+
+---
+
+# SEMANTIC SEARCH
+
+Teach:
+
+Query
+ ↓
+Embedding
+ ↓
+Vector similarity
+ ↓
+Relevant movies
+ ↓
+Ranking
+
+Explain:
+
+- Top-K
+- Similarity threshold
+- Ranking
+- Retrieval quality
+- False positives
+- False negatives
+
+---
+
+# RAG
+
+RAG is a core feature of MovieHub AI.
+
+Teach:
+
+- Retrieval-Augmented Generation
+- Retrieval vs generation
+- Query transformation
+- Retrieval
+- Ranking
+- Context construction
+- Context limits
+- Grounding
+- Hallucination
+- Source attribution
+- RAG failure modes
+
+Target pipeline:
+
+User question
+ ↓
+Query embedding
+ ↓
+Retrieve relevant movies
+ ↓
+Rank results
+ ↓
+Construct context
+ ↓
+LLM
+ ↓
+Grounded answer
+
+Build the initial RAG pipeline without LangChain.
+
+---
+
+# CONVERSATION MEMORY
+
+Teach:
+
+- Stateless HTTP
+- Conversation state
+- Message history
+- Short-term memory
+- Long-term memory
+- Context windows
+- Token limits
+- Conversation summarization
+- Database persistence
+- Redis caching
+
+Target model:
+
+Conversation
+    |
+    +── Message
+    +── Message
+    +── Message
+
+---
+
+# PERSONALIZATION
+
+Use MovieHub data:
+
+- Watch history
+- Watchlist
+- Ratings
+- Preferences
+
+Teach:
+
+- User-specific context
+- Personalized retrieval
+- Authorization
+- Privacy
+- Data isolation
+
+---
+
+# TOOL / FUNCTION CALLING
+
+Tool calling is a core feature.
+
+Potential tools:
+
+- search_movies
+- get_movie
+- get_similar_movies
+- get_user_watchlist
+- get_watch_history
+- search_by_genre
+- search_by_rating
+
+Teach:
+
+- Tool schemas
+- Tool selection
+- Tool arguments
+- Tool execution
+- Tool results
+- Validation
+- Authorization
+- Tool errors
+- Tool loops
+- Security
+
+Architecture:
+
+User
+ ↓
+LLM
+ ↓
+Tool decision
+ ↓
+Tool execution
+ ↓
+Tool result
+ ↓
+LLM
+ ↓
+Final answer
+
+Understand tool calling before introducing agent frameworks.
+
+---
+
+# STREAMING
+
+Teach:
+
+- Token streaming
+- Async generators
+- SSE
+- WebSockets
+- Connection lifecycle
+- Cancellation
+- Client disconnects
+
+---
+
+# AGENTS
+
+Agents are an advanced phase.
+
+Do not introduce agents until the following are understood:
+
+- LLMs
+- RAG
+- Memory
+- Tools
+- Streaming
+- Evaluation
+
+Then teach:
+
+- Agent loop
+- Planning
+- Tool selection
+- Tool execution
+- Observation
+- Iteration
+- Termination
+- Agent failures
+- Security
+- Evaluation
+
+Build a simple agent loop ourselves before using an agent framework.
+
+---
+
+# AI EVALUATION
+
+Teach:
+
+- Golden datasets
+- Retrieval evaluation
+- Answer relevance
+- Groundedness
+- Hallucination
+- Tool accuracy
+- Regression testing
+- Latency
+- Token usage
+- Cost
+
+Remember:
+
+A working API does not necessarily mean a good AI system.
+
+---
+
+# AI SECURITY
+
+Teach:
+
+- Prompt injection
+- Indirect prompt injection
+- Data leakage
+- Tool authorization
+- User isolation
+- Malicious inputs
+- Output validation
+- Sensitive data handling
+
+---
+
+# AI PERFORMANCE
+
+Teach:
+
+- Token optimization
+- Context optimization
+- Retrieval optimization
+- Caching
+- Model selection
+- Latency
+- Streaming
+- Cost
+
+Measure before optimizing.
+
+---
+
+# FRAMEWORKS
+
+Do NOT introduce these initially:
+
+- LangChain
+- LangGraph
+- LlamaIndex
+- Agent frameworks
+
+First understand the underlying mechanisms.
+
+After implementing the concepts ourselves, compare frameworks and explain:
+
+- What they abstract
+- What problem they solve
+- Advantages
+- Disadvantages
+- When to use
+- When not to use
